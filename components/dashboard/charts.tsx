@@ -22,7 +22,7 @@ import {
 import { CATEGORY_LABELS, type Category } from "@/lib/types";
 
 const INK = "#16190f";
-const SLATE = "#6e7a63";
+const SLATE = "#5d6852";
 const FLAG = "#e01b54";
 
 function PlaneTooltip({

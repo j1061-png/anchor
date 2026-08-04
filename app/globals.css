@@ -4,7 +4,9 @@
   /* UI palette — §7 of the spec. Everything derives from these. */
   --paper: #e4e7dc;
   --ink: #16190f;
-  --slate: #6e7a63;
+  /* Spec said #6e7a63; darkened one step so small text passes WCAG AA
+     (4.7:1 on paper, 5.5:1 on chalk) — the spec's own accessibility floor. */
+  --slate: #5d6852;
   --flag: #e01b54;
   --gold: #f0b429;
   --chalk: #f7f8f4;

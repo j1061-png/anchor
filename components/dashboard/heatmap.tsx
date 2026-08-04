@@ -54,7 +54,7 @@ export function CalendarHeatmap({
                     background: tint(cell.count),
                     boxShadow:
                       cell.count === 0
-                        ? "inset 0 0 0 1px rgb(110 122 99 / 0.35)"
+                        ? "inset 0 0 0 1px rgb(93 104 82 / 0.35)"
                         : undefined,
                   }}
                 />
@@ -72,7 +72,7 @@ export function CalendarHeatmap({
             style={{
               background: tint(n),
               boxShadow:
-                n === 0 ? "inset 0 0 0 1px rgb(110 122 99 / 0.35)" : undefined,
+                n === 0 ? "inset 0 0 0 1px rgb(93 104 82 / 0.35)" : undefined,
             }}
           />
         ))}

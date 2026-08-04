@@ -372,7 +372,7 @@ function TimeBlocks({ fraction }: { fraction: number }) {
                   ? "var(--flag)"
                   : "var(--ink)"
                 : "transparent",
-            boxShadow: i < filled ? undefined : "inset 0 0 0 1px rgb(110 122 99 / 0.5)",
+            boxShadow: i < filled ? undefined : "inset 0 0 0 1px rgb(93 104 82 / 0.5)",
           }}
         />
       ))}
