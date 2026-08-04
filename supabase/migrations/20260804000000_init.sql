@@ -91,6 +91,8 @@ create table attempts (
 
 create index attempts_user_category on attempts (user_id, category);
 create index attempts_user_seed on attempts (user_id, seed);
+-- One graded answer per puzzle slot: closes the double-submit race.
+create unique index attempts_one_per_slot on attempts (session_id, seed);
 
 create table achievements (
   id uuid primary key default gen_random_uuid(),

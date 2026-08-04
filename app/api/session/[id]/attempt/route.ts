@@ -108,25 +108,16 @@ export async function POST(
   });
   const ratingDelta = newRating - oldRating;
 
-  await admin
-    .from("category_ratings")
-    .update({
-      rating: newRating,
-      puzzles_seen: (ratingRow?.puzzles_seen ?? 0) + 1,
-      correct_count: (ratingRow?.correct_count ?? 0) + (correct ? 1 : 0),
-      median_time_ms: nudgeMedian(ratingRow?.median_time_ms ?? null, timeMs),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id)
-    .eq("category", slot.category);
-
   // XP: base minus hint costs, floored at 2; practice pays half (§4).
   let xp = xpForPuzzle(slot.difficulty, correct);
   for (const tier of tiersUsed) xp -= HINT_XP_COST[tier];
   xp = Math.max(2, xp);
   if (session.type === "practice") xp = Math.max(1, Math.round(xp / 2));
 
-  await admin.from("attempts").insert({
+  // The insert is the dedup gate: the unique index on (session_id, seed)
+  // rejects a concurrent duplicate BEFORE any score/xp write happens. The
+  // earlier select is just a fast path for a clean error message.
+  const { error: insertError } = await admin.from("attempts").insert({
     session_id: session.id,
     user_id: user.id,
     puzzle_type: slot.type,
@@ -140,6 +131,24 @@ export async function POST(
     answer: answer ?? null,
     rating_delta: ratingDelta,
   });
+  if (insertError) {
+    return NextResponse.json(
+      { error: "That puzzle was already answered." },
+      { status: 409 },
+    );
+  }
+
+  await admin
+    .from("category_ratings")
+    .update({
+      rating: newRating,
+      puzzles_seen: (ratingRow?.puzzles_seen ?? 0) + 1,
+      correct_count: (ratingRow?.correct_count ?? 0) + (correct ? 1 : 0),
+      median_time_ms: nudgeMedian(ratingRow?.median_time_ms ?? null, timeMs),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", user.id)
+    .eq("category", slot.category);
 
   const xpEarnedSoFar = session.xp_earned + xp;
   await admin
