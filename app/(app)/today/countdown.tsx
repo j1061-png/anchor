@@ -1,6 +1,6 @@
 "use client";
 
-// Live countdown to local midnight — when tomorrow's session unlocks.
+// Live countdown to local midnight — when tomorrow's session opens.
 
 import { useEffect, useState } from "react";
 

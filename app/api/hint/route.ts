@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // Tiers unlock strictly in order: 1, then 2, then 3.
+  // Tiers go strictly in order: 1, then 2, then 3.
   const log = (session.hint_log ?? {}) as Record<string, number[]>;
   const already = log[parsed.data.seed] ?? [];
   const highest = already.length ? Math.max(...already) : 0;

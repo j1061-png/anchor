@@ -4,6 +4,7 @@ import { PUZZLE_LABELS, type SessionSlot } from "@/lib/types";
 import { BlockMeter } from "@/components/ui/think-timer";
 import { StartSessionButton } from "./start-button";
 import { MidnightCountdown } from "./countdown";
+import { ChallengeCta } from "@/components/share/challenge-cta";
 import Link from "next/link";
 
 export const metadata = { title: "Today" };
@@ -17,7 +18,7 @@ export default async function TodayPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("timezone, streak_current, streak_freezes, display_name")
+    .select("timezone, streak_current, streak_freezes, display_name, friend_code")
     .eq("id", user.id)
     .single();
   const today = localDate(profile?.timezone ?? "UTC");
@@ -58,6 +59,7 @@ export default async function TodayPage() {
           streak={profile?.streak_current ?? 0}
           freezes={profile?.streak_freezes ?? 0}
         />
+        <ChallengeCta friendCode={profile?.friend_code} />
       </div>
     );
   }
@@ -126,6 +128,7 @@ export default async function TodayPage() {
         <p className="text-sm text-slate">Tomorrow&apos;s five in</p>
         <MidnightCountdown />
       </section>
+      <ChallengeCta friendCode={profile?.friend_code} />
       <StreakCard
         streak={profile?.streak_current ?? 0}
         freezes={profile?.streak_freezes ?? 0}

@@ -25,7 +25,7 @@ const COMPONENTS = {
   mentalmath: MentalMathPuzzle,
 } as const;
 
-function Harness() {
+function DevRunner() {
   const params = useSearchParams();
   const type = (params.get("type") ?? "blockfit") as keyof typeof COMPONENTS;
   const seed = params.get("seed") ?? "dev-1";
@@ -63,7 +63,7 @@ function Harness() {
   );
 
   const onHintRequest = useCallback(async (tier: 1 | 2 | 3) => {
-    const text = `Dev harness hint, tier ${tier}.`;
+    const text = `Dev stub hint, tier ${tier}.`;
     setHints((h) => [...h, text]);
     return text;
   }, []);
@@ -104,7 +104,7 @@ function Harness() {
 export default function DevPuzzlePage() {
   return (
     <Suspense>
-      <Harness />
+      <DevRunner />
     </Suspense>
   );
 }
