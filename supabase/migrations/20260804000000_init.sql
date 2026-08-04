@@ -54,6 +54,8 @@ create table sessions (
   xp_earned integer not null default 0,
   accuracy real,
   hints_used integer not null default 0,
+  -- cognitive score snapshot at completion; feeds the score-over-time chart
+  cognitive_score_after integer,
   started_at timestamptz not null default now(),
   completed_at timestamptz
 );

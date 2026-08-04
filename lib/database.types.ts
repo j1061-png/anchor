@@ -5,7 +5,7 @@
 
 import type { Category, SessionStatus, SessionType } from "./types";
 
-export interface ProfileRow {
+export type ProfileRow = {
   id: string;
   display_name: string | null;
   avatar_emoji: string | null;
@@ -26,7 +26,7 @@ export interface ProfileRow {
   created_at: string;
 }
 
-export interface CategoryRatingRow {
+export type CategoryRatingRow = {
   user_id: string;
   category: Category;
   rating: number;
@@ -36,7 +36,7 @@ export interface CategoryRatingRow {
   updated_at: string;
 }
 
-export interface SessionRow {
+export type SessionRow = {
   id: string;
   user_id: string;
   type: SessionType;
@@ -47,11 +47,12 @@ export interface SessionRow {
   xp_earned: number;
   accuracy: number | null;
   hints_used: number;
+  cognitive_score_after: number | null;
   started_at: string;
   completed_at: string | null;
 }
 
-export interface AttemptRow {
+export type AttemptRow = {
   id: string;
   session_id: string;
   user_id: string;
@@ -67,14 +68,14 @@ export interface AttemptRow {
   created_at: string;
 }
 
-export interface AchievementRow {
+export type AchievementRow = {
   id: string;
   user_id: string;
   achievement_key: string;
   unlocked_at: string;
 }
 
-export interface FriendshipRow {
+export type FriendshipRow = {
   id: string;
   requester_id: string;
   addressee_id: string;
@@ -82,7 +83,7 @@ export interface FriendshipRow {
   created_at: string;
 }
 
-export interface ChallengeRow {
+export type ChallengeRow = {
   id: string;
   code: string;
   creator_id: string;
@@ -93,7 +94,7 @@ export interface ChallengeRow {
   created_at: string;
 }
 
-export interface ChallengeResultRow {
+export type ChallengeResultRow = {
   id: string;
   challenge_id: string;
   user_id: string;
@@ -102,7 +103,7 @@ export interface ChallengeResultRow {
   completed_at: string;
 }
 
-export interface HintCacheRow {
+export type HintCacheRow = {
   id: string;
   puzzle_type: string;
   seed: string;
@@ -111,7 +112,7 @@ export interface HintCacheRow {
   created_at: string;
 }
 
-export interface LeaderboardViewRow {
+export type LeaderboardViewRow = {
   id: string;
   display_name: string;
   avatar_emoji: string | null;
@@ -121,12 +122,12 @@ export interface LeaderboardViewRow {
   streak_current: number;
 }
 
-export interface WeeklyXpRow {
+export type WeeklyXpRow = {
   user_id: string;
   xp: number;
 }
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
