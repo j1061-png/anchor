@@ -54,8 +54,13 @@ create table sessions (
   xp_earned integer not null default 0,
   accuracy real,
   hints_used integer not null default 0,
+  -- server-side record of hint tiers served, keyed by puzzle seed; the
+  -- attempt route trusts this over anything the client reports
+  hint_log jsonb not null default '{}'::jsonb,
   -- cognitive score snapshot at completion; feeds the score-over-time chart
   cognitive_score_after integer,
+  -- AI recap paragraph, written once at completion
+  feedback text,
   started_at timestamptz not null default now(),
   completed_at timestamptz
 );
@@ -63,6 +68,9 @@ create table sessions (
 create unique index sessions_one_daily_per_day
   on sessions (user_id, date) where (type = 'daily');
 create index sessions_user_date on sessions (user_id, date);
+
+-- set after the challenges table exists (below)
+-- alter table sessions add column challenge_id;
 
 create table attempts (
   id uuid primary key default gen_random_uuid(),
@@ -77,6 +85,7 @@ create table attempts (
   hints_used integer not null default 0,
   attempts integer not null default 1,
   answer jsonb,
+  rating_delta integer not null default 0,
   created_at timestamptz not null default now()
 );
 
@@ -113,6 +122,9 @@ create table challenges (
 );
 
 create index challenges_code on challenges (code);
+
+alter table sessions
+  add column challenge_id uuid references challenges (id) on delete set null;
 
 create table challenge_results (
   id uuid primary key default gen_random_uuid(),

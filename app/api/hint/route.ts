@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { generateHint } from "@/lib/ai";
 import { PUZZLE_TYPES } from "@/lib/types";
 
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
   // The user must have actually been served this seed: no free hint farming.
   const { data: session } = await supabase
     .from("sessions")
-    .select("id, puzzle_seeds")
+    .select("id, puzzle_seeds, hint_log")
     .eq("user_id", user.id)
     .eq("status", "in_progress")
     .order("started_at", { ascending: false })
@@ -38,13 +39,38 @@ export async function POST(request: Request) {
 
   const slots = (session?.puzzle_seeds ?? []) as { seed?: string }[];
   const served = Array.isArray(slots) && slots.some((s) => s?.seed === parsed.data.seed);
-  if (!served) {
+  if (!session || !served) {
     return NextResponse.json(
       { error: "That puzzle is not in your current session." },
       { status: 403 },
     );
   }
 
+  // Tiers unlock strictly in order: 1, then 2, then 3.
+  const log = (session.hint_log ?? {}) as Record<string, number[]>;
+  const already = log[parsed.data.seed] ?? [];
+  const highest = already.length ? Math.max(...already) : 0;
+  if (parsed.data.tier > highest + 1) {
+    return NextResponse.json(
+      { error: `Tier ${highest + 1} comes first.` },
+      { status: 400 },
+    );
+  }
+
   const hint = await generateHint(parsed.data);
+
+  // Record the served tier server-side; the attempt route scores from this
+  // log, not from anything the client claims.
+  if (!already.includes(parsed.data.tier)) {
+    const admin = createAdminClient();
+    await admin
+      .from("sessions")
+      .update({
+        hint_log: { ...log, [parsed.data.seed]: [...already, parsed.data.tier] },
+        hints_used: Object.values(log).flat().length + 1,
+      })
+      .eq("id", session.id);
+  }
+
   return NextResponse.json({ hint });
 }

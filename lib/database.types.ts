@@ -47,7 +47,10 @@ export type SessionRow = {
   xp_earned: number;
   accuracy: number | null;
   hints_used: number;
+  hint_log: Record<string, number[]>;
   cognitive_score_after: number | null;
+  feedback: string | null;
+  challenge_id: string | null;
   started_at: string;
   completed_at: string | null;
 }
@@ -65,6 +68,7 @@ export type AttemptRow = {
   hints_used: number;
   attempts: number;
   answer: unknown;
+  rating_delta: number;
   created_at: string;
 }
 
