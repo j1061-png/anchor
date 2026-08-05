@@ -37,8 +37,20 @@ npx supabase db push
 
 Everything is in that one file: tables, RLS policies, the new-user trigger
 (profile + friend code + rating rows + referral credit), `leaderboard_view`,
-the `weekly_xp_mv` materialised view, and the `lookup_friend_code` /
-`refresh_weekly_xp` functions.
+the `weekly_xp_mv` materialised view with its opt-out-respecting
+`weekly_leaderboard` wrapper, and the `lookup_friend_code`,
+`refresh_weekly_xp`, `record_hint` and `apply_attempt` functions.
+
+Two things the migration deliberately does that are easy to undo by accident:
+
+- Clients have **no write path** to `challenges`, `sessions`, `attempts`,
+  `category_ratings`, `achievements` or `challenge_results`. Those rows carry
+  the puzzle seeds and scores, so only the service role writes them. If you
+  regenerate policies, keep the `revoke` statements.
+- `record_hint` and `apply_attempt` do their increments in SQL. They exist so
+  two puzzles submitted at once cannot lose an XP or rating update and so a
+  session completes exactly once; do not replace them with read-modify-write
+  in the route.
 
 After running it you can regenerate `lib/database.types.ts`:
 
