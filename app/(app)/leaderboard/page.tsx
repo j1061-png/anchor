@@ -113,7 +113,7 @@ export default async function LeaderboardPage({
     }
   } else if (tab === "weekly") {
     const { data: mv, count } = await supabase
-      .from("weekly_xp_mv")
+      .from("weekly_leaderboard")
       .select("*", { count: "exact" })
       .order("xp", { ascending: false })
       .order("user_id", { ascending: true })
@@ -130,20 +130,23 @@ export default async function LeaderboardPage({
     }
     for (const m of mv ?? []) {
       const v = byId.get(m.user_id);
-      if (!v) continue; // opted-out profiles stay off the weekly board
+      // weekly_leaderboard already filters opt-outs, so counts, ranks and
+      // this page agree; a missing view row would only mean a mid-request
+      // profile change.
+      if (!v) continue;
       rows.push(viewRow(v, from + rows.length + 1, m.xp));
     }
     if (!meVisible) {
       note = OPT_OUT_NOTE;
     } else if (!rows.some((r) => r.id === me.id)) {
       const { data: myWeek } = await supabase
-        .from("weekly_xp_mv")
+        .from("weekly_leaderboard")
         .select("xp")
         .eq("user_id", me.id)
         .maybeSingle();
       if (myWeek) {
         const { count: above } = await supabase
-          .from("weekly_xp_mv")
+          .from("weekly_leaderboard")
           .select("user_id", { count: "exact", head: true })
           .gt("xp", myWeek.xp);
         pinned = ownRow((above ?? 0) + 1, myWeek.xp);

@@ -45,7 +45,7 @@ export async function POST(
   if (!parsed.success) {
     return NextResponse.json({ error: "Bad attempt." }, { status: 400 });
   }
-  const { slotIndex, answer, timeMs } = parsed.data;
+  const { slotIndex, answer, timeMs: clientTimeMs } = parsed.data;
 
   const admin = createAdminClient();
   const { data: session } = await admin
@@ -81,6 +81,24 @@ export async function POST(
       { status: 409 },
     );
   }
+
+  // Clamp the reported time to what the server can actually account for:
+  // the slot cannot have started before the session began or before the
+  // previous answer landed. A forged low timeMs would otherwise buy the
+  // Elo speed bonus and drag the category median down.
+  const { data: lastAttempt } = await admin
+    .from("attempts")
+    .select("created_at")
+    .eq("session_id", session.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const slotStart = Math.max(
+    new Date(session.started_at).getTime(),
+    lastAttempt ? new Date(lastAttempt.created_at).getTime() : 0,
+  );
+  const serverElapsed = Math.max(1, Date.now() - slotStart);
+  const timeMs = Math.min(clientTimeMs, serverElapsed);
 
   // Grade server-side; the solution only leaves here after this point.
   const correct = gradeAnswer(slot.type, slot.seed, slot.difficulty, answer);
@@ -138,39 +156,34 @@ export async function POST(
     );
   }
 
-  await admin
-    .from("category_ratings")
-    .update({
-      rating: newRating,
-      puzzles_seen: (ratingRow?.puzzles_seen ?? 0) + 1,
-      correct_count: (ratingRow?.correct_count ?? 0) + (correct ? 1 : 0),
-      median_time_ms: nudgeMedian(ratingRow?.median_time_ms ?? null, timeMs),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id)
-    .eq("category", slot.category);
+  // XP, rating and completion in one SQL call: increments happen in the
+  // database so two slots submitted at once cannot lose an update, and the
+  // conditional status flip means completion runs exactly once.
+  const { data: claimedCompletion } = await admin.rpc("apply_attempt", {
+    p_session: session.id,
+    p_user: user.id,
+    p_xp: xp,
+    p_category: slot.category,
+    p_rating: newRating,
+    p_correct: correct,
+    p_median: nudgeMedian(ratingRow?.median_time_ms ?? null, timeMs),
+    p_slots: slots.length,
+  });
 
-  const xpEarnedSoFar = session.xp_earned + xp;
-  await admin
-    .from("sessions")
-    .update({ xp_earned: xpEarnedSoFar })
-    .eq("id", session.id);
-
-  // Completion check.
-  const { count } = await admin
-    .from("attempts")
-    .select("id", { count: "exact", head: true })
-    .eq("session_id", session.id);
-  const sessionComplete = (count ?? 0) >= slots.length;
-
+  const sessionComplete = claimedCompletion === true;
   if (sessionComplete) {
+    const { data: fresh } = await admin
+      .from("sessions")
+      .select("xp_earned")
+      .eq("id", session.id)
+      .single();
     await completeSession({
       admin,
       userId: user.id,
       sessionId: session.id,
       sessionType: session.type,
       challengeId: session.challenge_id,
-      xpEarned: xpEarnedSoFar,
+      xpEarned: fresh?.xp_earned ?? session.xp_earned + xp,
     });
   }
 
@@ -270,10 +283,11 @@ async function completeSession(args: {
   }));
   const feedback = await generateRecapFeedback(summaries);
 
+  // apply_attempt already flipped status to complete (that flip is what
+  // claimed this run); fill in the rest of the summary.
   await admin
     .from("sessions")
     .update({
-      status: "complete",
       completed_at: new Date().toISOString(),
       accuracy,
       score,

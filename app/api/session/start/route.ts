@@ -4,7 +4,22 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildPracticeSlots, selectDailySlots } from "@/lib/engine";
 import { localDate } from "@/lib/streak";
-import { CATEGORIES, type SessionSlot } from "@/lib/types";
+import { CATEGORIES, PUZZLE_TYPES, type SessionSlot } from "@/lib/types";
+
+// Defence in depth: challenge rows are service-role-written, but the seeds
+// they carry drive grading, so re-check their shape before playing them.
+const slotSchema = z.object({
+  type: z.enum(PUZZLE_TYPES),
+  category: z.enum(CATEGORIES),
+  seed: z.string().min(1).max(64),
+  difficulty: z.number().int().min(1).max(10),
+});
+
+function validateSlots(raw: unknown): SessionSlot[] {
+  const parsed = z.array(slotSchema).length(5).safeParse(raw);
+  if (!parsed.success) throw new Error("bad-slots");
+  return parsed.data;
+}
 
 const bodySchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("daily") }),
@@ -139,13 +154,23 @@ export async function POST(request: Request) {
     .maybeSingle();
   if (open) return NextResponse.json({ sessionId: open.id });
 
+  let challengeSlots: SessionSlot[];
+  try {
+    challengeSlots = validateSlots(challenge.puzzle_seeds);
+  } catch {
+    return NextResponse.json(
+      { error: "This challenge is malformed. Ask for a new link." },
+      { status: 422 },
+    );
+  }
+
   const { data: created, error } = await admin
     .from("sessions")
     .insert({
       user_id: user.id,
       type: "challenge",
       date: today,
-      puzzle_seeds: challenge.puzzle_seeds as SessionSlot[],
+      puzzle_seeds: challengeSlots,
       challenge_id: challenge.id,
     })
     .select("id")

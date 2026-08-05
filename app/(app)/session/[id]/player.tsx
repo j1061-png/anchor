@@ -111,12 +111,7 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
       const r = await fetch("/api/hint", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          type: slot.type,
-          seed: slot.seed,
-          difficulty: slot.difficulty,
-          tier,
-        }),
+        body: JSON.stringify({ sessionId, seed: slot.seed, tier }),
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "No hint right now.");
@@ -129,7 +124,7 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
     } finally {
       setHintLoading(false);
     }
-  }, [stage, hintTexts.length, hintLoading]);
+  }, [stage, hintTexts.length, hintLoading, sessionId]);
 
   const onHintRequest = useCallback(
     async (tier: 1 | 2 | 3): Promise<string> => {

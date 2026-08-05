@@ -27,7 +27,9 @@ create table profiles (
   streak_longest integer not null default 0,
   streak_freezes integer not null default 0,
   last_session_date date,
-  cognitive_score integer not null default 1000,
+  -- 400 is what the recency-weighted formula yields for six fresh 1000
+  -- ratings; seeding 1000 here would rank untested accounts at the top.
+  cognitive_score integer not null default 400,
   referred_by uuid references profiles (id),
   created_at timestamptz not null default now()
 );
@@ -189,7 +191,11 @@ begin
     select new.id, c from unnest(enum_range(null::category)) as c;
 
   if referrer is not null then
-    update profiles set xp = xp + 50 where id = referrer;
+    -- Level is a pure function of xp (§6), so recompute it with the bonus.
+    update profiles
+      set xp = xp + 50,
+          level = floor(sqrt((xp + 50) / 100.0))::int
+      where id = referrer;
   end if;
 
   return new;
@@ -220,6 +226,14 @@ create materialized view weekly_xp_mv as
 
 create unique index weekly_xp_mv_user on weekly_xp_mv (user_id);
 
+-- RLS cannot apply to a materialised view, so clients never read it directly.
+-- This wrapper is the only public weekly surface and honours the opt-out.
+create view weekly_leaderboard as
+  select m.user_id, m.xp
+  from weekly_xp_mv m
+  join profiles p on p.id = m.user_id
+  where p.public_leaderboard = true and p.display_name is not null;
+
 create or replace function refresh_weekly_xp() returns void
 language plpgsql security definer set search_path = public as $$
 begin
@@ -233,6 +247,82 @@ language sql security definer set search_path = public as $$
   select id, display_name, avatar_emoji from profiles
   where friend_code = upper(code) and display_name is not null;
 $$;
+
+-- Security-definer functions are executable by PUBLIC unless revoked.
+revoke execute on function refresh_weekly_xp() from public, anon, authenticated;
+revoke execute on function lookup_friend_code(text) from public, anon;
+grant execute on function lookup_friend_code(text) to authenticated;
+revoke execute on function generate_friend_code() from public, anon, authenticated;
+
+-- Atomic hint-log append: last-write-wins on a whole-jsonb update loses a
+-- concurrent tier. Returns the tiers now recorded for the seed.
+create or replace function record_hint(
+  p_session uuid, p_user uuid, p_seed text, p_tier int
+) returns int[]
+language plpgsql security definer set search_path = public as $$
+declare
+  tiers int[];
+begin
+  update sessions
+    set hint_log = jsonb_set(
+          hint_log, array[p_seed],
+          coalesce(hint_log -> p_seed, '[]'::jsonb) || to_jsonb(p_tier), true),
+        hints_used = hints_used + 1
+    where id = p_session
+      and user_id = p_user
+      and status = 'in_progress'
+      and not coalesce(hint_log -> p_seed, '[]'::jsonb) @> to_jsonb(p_tier)
+    returning array(select jsonb_array_elements_text(hint_log -> p_seed)::int)
+    into tiers;
+
+  if tiers is null then
+    select array(select jsonb_array_elements_text(hint_log -> p_seed)::int)
+      into tiers from sessions where id = p_session and user_id = p_user;
+  end if;
+  return coalesce(tiers, '{}');
+end;
+$$;
+
+revoke execute on function record_hint(uuid, uuid, text, int)
+  from public, anon, authenticated;
+
+-- Atomic per-attempt bookkeeping: increments in SQL so two slots submitted
+-- at once cannot lose an update, and claims completion exactly once.
+create or replace function apply_attempt(
+  p_session uuid, p_user uuid, p_xp int, p_category category,
+  p_rating int, p_correct boolean, p_median int, p_slots int
+) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare
+  claimed uuid;
+  answered int;
+begin
+  update sessions set xp_earned = xp_earned + p_xp where id = p_session;
+
+  update category_ratings
+    set rating = p_rating,
+        puzzles_seen = puzzles_seen + 1,
+        correct_count = correct_count + (case when p_correct then 1 else 0 end),
+        median_time_ms = p_median,
+        updated_at = now()
+    where user_id = p_user and category = p_category;
+
+  select count(*) into answered from attempts where session_id = p_session;
+  if answered < p_slots then
+    return false;
+  end if;
+
+  -- Only one caller wins this update, so completion runs exactly once.
+  update sessions set status = 'complete'
+    where id = p_session and status = 'in_progress'
+    returning id into claimed;
+  return claimed is not null;
+end;
+$$;
+
+revoke execute on function apply_attempt(
+  uuid, uuid, int, category, int, boolean, int, int)
+  from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Row level security. Scoring writes (sessions, attempts, ratings, xp,
@@ -284,14 +374,17 @@ create policy "request friendship" on friendships
   for insert with check (auth.uid() = requester_id and status = 'pending');
 create policy "accept friendship" on friendships
   for update using (auth.uid() = addressee_id)
-  with check (status = 'accepted');
+  with check (auth.uid() = addressee_id and status = 'accepted');
 create policy "remove friendship" on friendships
   for delete using (auth.uid() = requester_id or auth.uid() = addressee_id);
+-- Accepting may only flip status; the pair itself is fixed at request time.
+revoke update on friendships from anon, authenticated;
+grant update (status) on friendships to authenticated;
 
-create policy "read challenges" on challenges
-  for select using (true);
-create policy "create own challenge" on challenges
-  for insert with check (auth.uid() = creator_id);
+-- Challenges are server-written only: the seeds they carry are fed to the
+-- grader, so a client that could author them could mint its own answers.
+revoke insert, update, delete on challenges from anon, authenticated;
+revoke select on challenges from anon, authenticated;
 
 create policy "read challenge results" on challenge_results
   for select using (true);
@@ -302,4 +395,6 @@ create policy "read hint cache" on hint_cache
 revoke insert, update, delete on hint_cache from anon, authenticated;
 
 grant select on leaderboard_view to anon, authenticated;
-grant select on weekly_xp_mv to anon, authenticated;
+-- The materialised view has no opt-out filter; only the wrapper is public.
+revoke all on weekly_xp_mv from anon, authenticated;
+grant select on weekly_leaderboard to anon, authenticated;

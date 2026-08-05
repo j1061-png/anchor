@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { buildPracticeSlots } from "@/lib/engine";
 import { CATEGORIES } from "@/lib/types";
 
@@ -40,11 +41,14 @@ export async function POST(request: Request) {
   const slots = buildPracticeSlots(category, difficulty);
   const site = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
 
-  // RLS allows users to insert their own challenge rows; expires_at defaults
-  // to 7 days in the schema. Retry on the cosmically rare code collision.
+  // Service role only: the seeds on a challenge row are handed to the
+  // grader, so clients must never be able to author one. Slots are built
+  // here from the validated category/difficulty, not taken from the body.
+  // expires_at defaults to 7 days in the schema.
+  const admin = createAdminClient();
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = newCode();
-    const { error } = await supabase.from("challenges").insert({
+    const { error } = await admin.from("challenges").insert({
       code,
       creator_id: user.id,
       category,

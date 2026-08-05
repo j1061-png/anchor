@@ -230,6 +230,7 @@ export type Database = {
     };
     Views: {
       leaderboard_view: { Row: LeaderboardViewRow; Relationships: [] };
+      weekly_leaderboard: { Row: WeeklyXpRow; Relationships: [] };
       weekly_xp_mv: { Row: WeeklyXpRow; Relationships: [] };
     };
     Functions: {
@@ -241,6 +242,28 @@ export type Database = {
           display_name: string;
           avatar_emoji: string | null;
         }[];
+      };
+      record_hint: {
+        Args: {
+          p_session: string;
+          p_user: string;
+          p_seed: string;
+          p_tier: number;
+        };
+        Returns: number[];
+      };
+      apply_attempt: {
+        Args: {
+          p_session: string;
+          p_user: string;
+          p_xp: number;
+          p_category: Category;
+          p_rating: number;
+          p_correct: boolean;
+          p_median: number;
+          p_slots: number;
+        };
+        Returns: boolean;
       };
     };
     Enums: {

@@ -73,6 +73,20 @@ export async function POST(request: Request) {
     reminder_time: body.reminder_time,
     timezone: body.timezone,
   };
+  // Onboarding runs once (§3). Re-posting would otherwise reset earned
+  // category ratings back to their calibration seeds.
+  const { data: existing } = await admin
+    .from("profiles")
+    .select("display_name")
+    .eq("id", user.id)
+    .single();
+  if (existing?.display_name) {
+    return NextResponse.json(
+      { error: "You already finished onboarding. Edit this on your profile." },
+      { status: 409 },
+    );
+  }
+
   const { error: profileError } = await admin
     .from("profiles")
     .update(profilePatch as never)

@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BlockMeter } from "@/components/ui/think-timer";
+import { ShareButton } from "@/components/share/share-button";
 import {
   CATEGORY_LABELS,
   PUZZLE_LABELS,
@@ -34,7 +35,13 @@ interface RecapData {
   newAchievements: string[];
 }
 
-export function SessionRecap({ sessionId }: { sessionId: string }) {
+export function SessionRecap({
+  sessionId,
+  friendCode,
+}: {
+  sessionId: string;
+  friendCode?: string;
+}) {
   const [data, setData] = useState<RecapData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -170,6 +177,17 @@ export function SessionRecap({ sessionId }: { sessionId: string }) {
           </ul>
         </section>
       )}
+
+      <section className="plane p-4">
+        <h2 className="mb-3 text-sm font-semibold">Share the score</h2>
+        <ShareButton
+          title="Anchor"
+          text={`${solved}/${data.perPuzzle.length} on today's five, ${data.perPuzzle.reduce((n, p) => n + p.hintsUsed, 0) === 0 ? "no hints" : "some hints"}.`}
+          url={`${typeof window === "undefined" ? "" : window.location.origin}/auth?mode=signup`}
+          imageUrl={`/api/share/score/${sessionId}`}
+          friendCode={friendCode}
+        />
+      </section>
 
       <Link
         href="/today"
