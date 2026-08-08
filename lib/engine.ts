@@ -66,10 +66,17 @@ export function targetDifficulty(rating: number): number {
   return best;
 }
 
-// Recency-weighted mean of the six category ratings (§6): categories tested
-// recently count more. Weight = 1 / (1 + days since last update), then
-// normalised. Result clamped to 0..1000 for display (ratings live near
-// 800–1600; we map 600..1600 → 0..1000).
+// DEPRECATED (RESEARCH-SPEC R1). A single composite of accuracy, time, hints
+// and retention is not a validated construct, and the research strategy places
+// a single "brain score" on its Do-Not-Build list. This is retained only so the
+// completeSession write path and existing rows keep working; nothing displays
+// it any more. The headline progress view is the transparent independence
+// profile (Feature F) at /independence, which shows each dimension separately
+// with its own sample size and confidence interval. Do not add new readers.
+//
+// Recency-weighted mean of the six category ratings: categories tested recently
+// count more. Weight = 1 / (1 + days since last update), normalised, clamped to
+// 0..1000 (ratings live near 800–1600; mapped 600..1600 → 0..1000).
 export function cognitiveScore(
   ratings: { rating: number; updated_at: string }[],
   now: Date = new Date(),

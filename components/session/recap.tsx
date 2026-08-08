@@ -113,31 +113,64 @@ export function SessionRecap({
         ))}
       </section>
 
-      <div className="grid grid-cols-2 gap-4">
-        <section className="plane p-4">
-          <p className="num font-display text-3xl font-extrabold text-ink">
-            +{data.xpEarned}
-          </p>
-          <p className="text-sm text-slate">xp earned</p>
-        </section>
-        <section className="plane p-4">
-          <p className="num font-display text-3xl font-extrabold">
-            {data.streak.current}
-          </p>
-          <p className="text-sm text-slate">
-            {data.sessionType === "daily"
-              ? data.streak.extendedToday
-                ? "day streak, extended"
-                : "day streak"
-              : "day streak, unchanged"}
-          </p>
-          <BlockMeter
-            filled={Math.min(16, data.streak.current)}
-            label={`streak ${data.streak.current} days`}
-            className="mt-2"
-          />
-        </section>
-      </div>
+      {/* Informational competence feedback, not a reward total (RESEARCH-SPEC
+          X1): positive competence feedback is the one reward type that raised
+          intrinsic motivation in Deci et al. So we describe what you did, and
+          keep the xp number quiet underneath. */}
+      <section className="plane p-4" aria-label="what you did">
+        <h2 className="text-sm font-semibold">What you did yourself</h2>
+        <ul className="mt-2 flex flex-col gap-1.5 text-sm">
+          {(() => {
+            const solvedAlone = data.perPuzzle.filter(
+              (p) => p.correct && p.hintsUsed === 0,
+            ).length;
+            const keptGoing = data.perPuzzle.filter(
+              (p) => p.correct && p.hintsUsed > 0,
+            ).length;
+            const lines: string[] = [];
+            if (solvedAlone > 0)
+              lines.push(
+                `Solved ${solvedAlone} of ${data.perPuzzle.length} with no help at all.`,
+              );
+            if (keptGoing > 0)
+              lines.push(
+                `Used a hint and then finished ${keptGoing} of them — help used as a tool.`,
+              );
+            if (lines.length === 0)
+              lines.push("A hard set. The next one calibrates to it.");
+            return lines.map((l, i) => (
+              <li key={i} className="flex gap-2">
+                <span
+                  aria-hidden
+                  className="mt-1.5 size-1.5 shrink-0 rounded-[1px] bg-gold"
+                />
+                {l}
+              </li>
+            ));
+          })()}
+        </ul>
+        <p className="num mt-3 text-xs text-slate">
+          {data.xpEarned} xp, weighted toward what you did without help
+        </p>
+      </section>
+
+      <section className="plane p-4">
+        <p className="num font-display text-3xl font-extrabold">
+          {data.streak.current}
+        </p>
+        <p className="text-sm text-slate">
+          {data.sessionType === "daily"
+            ? data.streak.extendedToday
+              ? "Retrieval days, extended"
+              : "Retrieval days"
+            : "Retrieval days, unchanged"}
+        </p>
+        <BlockMeter
+          filled={Math.min(16, data.streak.current)}
+          label={`${data.streak.current} retrieval days`}
+          className="mt-2"
+        />
+      </section>
 
       <section className="plane p-4" aria-label="rating moves">
         <h2 className="text-sm font-semibold">Ratings</h2>

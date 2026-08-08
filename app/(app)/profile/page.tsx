@@ -19,7 +19,7 @@ export default async function ProfilePage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "display_name, avatar_emoji, school, year_group, friend_code, timezone, reminder_time, public_leaderboard, xp, level, streak_current, streak_longest, cognitive_score, created_at",
+      "display_name, avatar_emoji, school, year_group, friend_code, timezone, reminder_time, public_leaderboard, leaderboard_opt_in, xp, level, streak_current, streak_longest, created_at",
     )
     .eq("id", user.id)
     .single();
@@ -58,7 +58,6 @@ export default async function ProfilePage() {
         yearGroup={profile.year_group}
         level={profile.level}
         xp={profile.xp}
-        cognitiveScore={profile.cognitive_score}
         streakCurrent={profile.streak_current}
         streakLongest={profile.streak_longest}
         memberSince={memberSince}
@@ -72,7 +71,7 @@ export default async function ProfilePage() {
 
       <SettingsCard
         userId={user.id}
-        publicLeaderboard={profile.public_leaderboard}
+        leaderboardOptIn={profile.leaderboard_opt_in ?? false}
         reminderTime={profile.reminder_time?.slice(0, 5) ?? null}
         timezone={profile.timezone}
       />

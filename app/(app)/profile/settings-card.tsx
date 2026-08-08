@@ -1,23 +1,49 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ProfileRow } from "@/lib/database.types";
 
 export interface SettingsCardProps {
   userId: string;
-  publicLeaderboard: boolean;
+  // R3: opt-in to the improvement / independence boards. Default off.
+  leaderboardOptIn: boolean;
   reminderTime: string | null; // "HH:MM" or null
   timezone: string;
 }
 
 export function SettingsCard(props: SettingsCardProps) {
-  const [publicBoard, setPublicBoard] = useState(props.publicLeaderboard);
+  const router = useRouter();
+  const [publicBoard, setPublicBoard] = useState(props.leaderboardOptIn);
   const [reminder, setReminder] = useState(props.reminderTime ?? "");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const savedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteText, setDeleteText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // App Store guideline 5.1.1(v): full account deletion, in-app, immediate.
+  async function deleteAccount() {
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch("/api/account/delete", { method: "POST" });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "Deletion failed. Try again.");
+      }
+      await createClient().auth.signOut();
+      router.replace("/auth?deleted=1");
+    } catch (e) {
+      setDeleting(false);
+      setDeleteError(e instanceof Error ? e.message : "Deletion failed. Try again.");
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -46,7 +72,7 @@ export function SettingsCard(props: SettingsCardProps) {
     const next = !publicBoard;
     setError(null);
     setPublicBoard(next); // optimistic
-    const ok = await write({ public_leaderboard: next });
+    const ok = await write({ leaderboard_opt_in: next });
     if (!ok) {
       setPublicBoard(!next);
       setError("The setting didn't save. Try again.");
@@ -79,11 +105,12 @@ export function SettingsCard(props: SettingsCardProps) {
       <div className="mt-4 flex items-start justify-between gap-4">
         <div>
           <p id="public-board-label" className="text-sm font-semibold">
-            Show me on public leaderboards
+            Put me on the improvement boards
           </p>
           <p className="mt-0.5 text-xs text-slate">
-            Off removes you from global, weekly and school boards. Friends
-            still see you.
+            Off by default. On, you&apos;re compared with people at your level
+            on how much you improve and how much you do without help, over the
+            last seven days. Never on a top score.
           </p>
         </div>
         <button
@@ -131,6 +158,64 @@ export function SettingsCard(props: SettingsCardProps) {
           {error}
         </p>
       )}
+
+      <div className="mt-6 border-t border-slate/30 pt-4">
+        <p className="text-sm font-semibold">Delete account</p>
+        <p className="mt-0.5 text-xs text-slate">
+          Immediate and permanent. Your profile, attempts, progress, streaks
+          and friend connections are all erased. There is no
+          &quot;deactivated&quot; state and no way back.
+        </p>
+
+        {!confirmingDelete ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="mt-3 min-h-11"
+            onClick={() => setConfirmingDelete(true)}
+          >
+            Delete my account
+          </Button>
+        ) : (
+          <div className="mt-3 flex flex-col gap-2">
+            <label className="grid gap-1.5 text-sm font-semibold">
+              Type DELETE to confirm
+              <Input
+                value={deleteText}
+                onChange={(e) => setDeleteText(e.target.value)}
+                autoComplete="off"
+                className="max-w-48"
+              />
+            </label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setConfirmingDelete(false);
+                  setDeleteText("");
+                  setDeleteError(null);
+                }}
+                disabled={deleting}
+              >
+                Keep my account
+              </Button>
+              <Button
+                type="button"
+                onClick={deleteAccount}
+                disabled={deleting || deleteText.trim() !== "DELETE"}
+              >
+                {deleting ? "Deleting…" : "Delete forever"}
+              </Button>
+            </div>
+            {deleteError && (
+              <p className="text-sm text-flag" role="alert">
+                {deleteError}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

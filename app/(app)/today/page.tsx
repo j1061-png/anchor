@@ -109,7 +109,7 @@ export default async function TodayPage() {
           <span className="num text-ink">
             {Math.round((session.accuracy ?? 0) * 5)}/5
           </span>{" "}
-          solved, <span className="num text-ink">{session.xp_earned}</span> xp
+          solved, <span className="num text-ink">{session.xp_earned}</span> XP
           banked.
         </p>
         {session.feedback && (
@@ -137,13 +137,18 @@ export default async function TodayPage() {
   );
 }
 
+// The streak counts days you did retrieval, not days you opened the app.
+// RESEARCH-SPEC R4 and A7 are explicit: a usage streak is exactly the thing
+// that must not be rewarded, because completion-contingent rewards erode the
+// motivation the product exists to protect. So the count is tied to attempts,
+// and the copy says plainly that showing up is not the measure.
 function StreakCard({ streak, freezes }: { streak: number; freezes: number }) {
   return (
     <section className="plane flex items-center justify-between p-5">
       <div>
         <p className="num font-display text-2xl font-extrabold">{streak}</p>
         <p className="text-sm text-slate">
-          day streak
+          Days you practised recall
           {freezes > 0 && (
             <>
               {" · "}
@@ -151,11 +156,14 @@ function StreakCard({ streak, freezes }: { streak: number; freezes: number }) {
             </>
           )}
         </p>
+        <p className="mt-1 text-xs text-slate">
+          Counts attempts, not opens. Turning up is not the point.
+        </p>
       </div>
       <BlockMeter
         filled={Math.min(16, streak)}
         size="md"
-        label={`streak, ${streak} days`}
+        label={`${streak} days of recall practice`}
       />
     </section>
   );

@@ -33,7 +33,6 @@ export interface IdentityCardProps {
   yearGroup: string | null;
   level: number;
   xp: number;
-  cognitiveScore: number;
   streakCurrent: number;
   streakLongest: number;
   memberSince: string; // preformatted date string
@@ -266,31 +265,29 @@ export function IdentityCard(props: IdentityCardProps) {
 
       <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-slate/30 pt-4 sm:grid-cols-4">
         <div>
-          <dt className="text-xs text-slate">level</dt>
+          <dt className="text-xs text-slate">Level</dt>
           <dd className="num font-display text-2xl font-extrabold">
             {props.level}
           </dd>
           <dd className="text-xs text-slate">
-            <span className="num">{props.xp}</span> xp
+            <span className="num">{props.xp}</span> XP
           </dd>
         </div>
         <div>
-          <dt className="text-xs text-slate">cognitive score</dt>
-          <dd className="num font-display text-2xl font-extrabold">
-            {props.cognitiveScore}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-xs text-slate">streak</dt>
+          <dt className="text-xs text-slate">Recall days</dt>
           <dd className="num font-display text-2xl font-extrabold">
             {props.streakCurrent}
           </dd>
-          <dd className="text-xs text-slate">
-            longest <span className="num">{props.streakLongest}</span>
-          </dd>
         </div>
         <div>
-          <dt className="text-xs text-slate">member since</dt>
+          <dt className="text-xs text-slate">Longest run</dt>
+          <dd className="num font-display text-2xl font-extrabold">
+            {props.streakLongest}
+          </dd>
+          <dd className="text-xs text-slate">days of recall practice</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-slate">Member since</dt>
           <dd className="num pt-1.5 text-sm font-semibold">
             {props.memberSince}
           </dd>

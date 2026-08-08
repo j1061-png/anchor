@@ -15,6 +15,14 @@ export type ProfileRow = {
   timezone: string;
   reminder_time: string | null;
   public_leaderboard: boolean;
+  // Added by 20260805000100_leaderboards.sql — opt-in, not opt-out (R3).
+  leaderboard_opt_in: boolean;
+  // Added by 20260805000000_research_spec.sql.
+  support_level: number;
+  support_level_updated_at: string | null;
+  ai_free_streak: number;
+  ai_free_longest: number;
+  retrieval_streak: number;
   xp: number;
   level: number;
   streak_current: number;
@@ -131,6 +139,24 @@ export type WeeklyXpRow = {
   xp: number;
 }
 
+export type IndependenceBoardRow = {
+  id: string;
+  display_name: string;
+  avatar_emoji: string | null;
+  band: number;
+  unaided_attempts: number;
+  unaided_correct: number;
+  independence_pct: number;
+}
+
+export type MostImprovedBoardRow = {
+  id: string;
+  display_name: string;
+  avatar_emoji: string | null;
+  band: number;
+  improvement_pct: number;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -232,6 +258,8 @@ export type Database = {
       leaderboard_view: { Row: LeaderboardViewRow; Relationships: [] };
       weekly_leaderboard: { Row: WeeklyXpRow; Relationships: [] };
       weekly_xp_mv: { Row: WeeklyXpRow; Relationships: [] };
+      independence_board: { Row: IndependenceBoardRow; Relationships: [] };
+      most_improved_board: { Row: MostImprovedBoardRow; Relationships: [] };
     };
     Functions: {
       refresh_weekly_xp: { Args: Record<string, never>; Returns: undefined };

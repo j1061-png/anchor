@@ -8,12 +8,12 @@ import { LEADERBOARD_TABS, type LeaderboardTab } from "./board";
 // this component just reflects it and swaps instantly on navigation.
 export function LeaderboardTabs() {
   const params = useSearchParams();
-  const raw = params.get("tab") ?? "global";
+  const raw = params.get("tab") ?? "improved";
   const active: LeaderboardTab = (
     LEADERBOARD_TABS as readonly string[]
   ).includes(raw)
     ? (raw as LeaderboardTab)
-    : "global";
+    : "improved";
 
   return (
     <nav aria-label="Leaderboard tabs" className="plane-sm p-1">

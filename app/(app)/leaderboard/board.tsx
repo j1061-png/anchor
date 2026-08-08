@@ -5,12 +5,10 @@ import Link from "next/link";
 
 export const PAGE_SIZE = 50;
 
-export const LEADERBOARD_TABS = [
-  "global",
-  "weekly",
-  "school",
-  "friends",
-] as const;
+// RESEARCH-SPEC R3: absolute top-score boards are on the Do-Not-Build list
+// (they demotivate low and median performers — Hanus & Fox 2015). The boards
+// that survive are improvement and independence, opt-in and skill-banded.
+export const LEADERBOARD_TABS = ["improved", "independence", "friends"] as const;
 export type LeaderboardTab = (typeof LEADERBOARD_TABS)[number];
 
 export interface BoardRow {

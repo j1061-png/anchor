@@ -4,13 +4,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { puzzleStructure } from "@/lib/puzzles";
 import { PUZZLE_LABELS, type PuzzleType } from "@/lib/types";
 
-// All model calls happen here, server-side only. The spec pins the model.
-const MODEL = "claude-sonnet-4-6";
+// All model calls happen here, server-side only. AI_MODEL + ANTHROPIC_BASE_URL
+// let dev point at any Anthropic-compatible provider (e.g. DeepSeek); the
+// default stays the spec's pinned model.
+const MODEL = process.env.AI_MODEL ?? "claude-sonnet-4-6";
 
 let _client: Anthropic | null = null;
 function client(): Anthropic | null {
   if (!process.env.ANTHROPIC_API_KEY) return null;
-  if (!_client) _client = new Anthropic();
+  // AI_BASE_URL, not ANTHROPIC_BASE_URL: the latter can be shadowed by a
+  // pre-existing shell export, which .env.local never overrides.
+  if (!_client) _client = new Anthropic({ baseURL: process.env.AI_BASE_URL || undefined });
   return _client;
 }
 

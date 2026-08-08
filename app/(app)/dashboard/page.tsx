@@ -1,16 +1,13 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ACHIEVEMENTS } from "@/lib/achievements";
 import { AchievementGrid } from "@/components/achievements/grid";
-import {
-  CategoryBars,
-  CategoryRadar,
-  ScoreOverTime,
-  ScoreSparkline,
-} from "@/components/dashboard/charts";
+import { CategoryBars, CategoryRadar } from "@/components/dashboard/charts";
 import { CalendarHeatmap } from "@/components/dashboard/heatmap";
+import { ProxyNote } from "@/components/research/proxy-note";
 import { CATEGORY_LABELS, type Category } from "@/lib/types";
 
-export const metadata = { title: "Dashboard" };
+export const metadata = { title: "Skill ratings" };
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -20,19 +17,10 @@ export default async function DashboardPage() {
   if (!user) return null;
 
   const since90 = new Date(Date.now() - 90 * 86_400_000).toISOString();
-  const since180 = new Date(Date.now() - 180 * 86_400_000).toISOString();
 
-  const [{ data: profile }, { data: ratings }, { data: sessions }, { data: attempts }, { data: unlocked }] =
+  const [{ data: ratings }, { data: attempts }, { data: unlocked }] =
     await Promise.all([
-      supabase.from("profiles").select("*").eq("id", user.id).single(),
       supabase.from("category_ratings").select("*").eq("user_id", user.id),
-      supabase
-        .from("sessions")
-        .select("date, cognitive_score_after, completed_at")
-        .eq("user_id", user.id)
-        .eq("status", "complete")
-        .gte("completed_at", since180)
-        .order("completed_at", { ascending: true }),
       supabase
         .from("attempts")
         .select("category, correct, hints_used, time_ms, created_at")
@@ -42,23 +30,23 @@ export default async function DashboardPage() {
     ]);
 
   const rows = attempts ?? [];
-  const scorePoints = (sessions ?? [])
-    .filter((s) => s.cognitive_score_after !== null)
-    .map((s) => ({ date: s.date, score: s.cognitive_score_after! }));
 
+  // The two headline dimensions, shown with their sample sizes (Feature F/G):
+  // never a single composite (R1). Unaided = solved without any hint.
   const total = rows.length;
-  const correct = rows.filter((a) => a.correct).length;
-  const hintFree = rows.filter((a) => a.hints_used === 0).length;
-  const accuracyPct = total ? (correct / total) * 100 : 0;
-  const independencePct = total ? (hintFree / total) * 100 : 0;
+  const unaided = rows.filter((a) => a.hints_used === 0);
+  const unaidedCorrect = unaided.filter((a) => a.correct).length;
+  const unaidedAccuracy = unaided.length
+    ? Math.round((unaidedCorrect / unaided.length) * 100)
+    : null;
+  const withHints = rows.filter((a) => a.hints_used > 0).length;
+  const hintReliance = total ? Math.round((withHints / total) * 100) : null;
 
-  // Think time (§6): median seconds before the first hint or answer — the
-  // stored time is time-to-answer; on no-hint attempts that is the full
-  // think, so the median over those approximates it.
-  const noHintTimes = rows
-    .filter((a) => a.hints_used === 0)
-    .map((a) => a.time_ms)
-    .sort((a, b) => a - b);
+  const accuracyPct = total
+    ? Math.round((rows.filter((a) => a.correct).length / total) * 100)
+    : 0;
+
+  const noHintTimes = unaided.map((a) => a.time_ms).sort((a, b) => a - b);
   const thinkTime = noHintTimes.length
     ? Math.round(noHintTimes[Math.floor(noHintTimes.length / 2)] / 1000)
     : null;
@@ -87,61 +75,68 @@ export default async function DashboardPage() {
     heatCounts[day] = (heatCounts[day] ?? 0) + 1;
   }
 
-  const weekAgo = Date.now() - 7 * 86_400_000;
-  const weekAgoPoint = scorePoints.filter(
-    (p) => new Date(p.date).getTime() <= weekAgo,
-  ).at(-1);
-  const delta =
-    weekAgoPoint !== undefined
-      ? (profile?.cognitive_score ?? 0) - weekAgoPoint.score
-      : null;
-
   const unlockedKeys = new Set((unlocked ?? []).map((a) => a.achievement_key));
 
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-display text-3xl font-extrabold tracking-tight">
-        Dashboard
+        Skill ratings
       </h1>
 
-      {/* Cognitive score hero */}
-      <section className="plane flex items-center justify-between p-5">
-        <div>
-          <p className="num font-display text-5xl font-extrabold">
-            {profile?.cognitive_score ?? 0}
-          </p>
-          <p className="mt-1 text-sm text-slate">
-            cognitive score
-            {delta !== null && (
-              <span
-                className="num ml-2"
-                style={{ color: delta < 0 ? "var(--flag)" : "var(--ink)" }}
-              >
-                {delta >= 0 ? "+" : ""}
-                {delta} this week
-              </span>
-            )}
-          </p>
-        </div>
-        <ScoreSparkline points={scorePoints.slice(-14)} />
+      {/* No composite score (R1). The headline progress view is the
+          independence profile; this page is the per-skill detail below it. */}
+      <section className="plane p-5">
+        <p className="text-sm leading-relaxed">
+          Anchor does not reduce your progress to one number. A single score
+          mixing accuracy, speed, hints and memory is not a real measurement of
+          anything. Your independence profile keeps the parts separate.
+        </p>
+        <Link
+          href="/independence"
+          className="mt-3 inline-flex items-center rounded-full border border-ink bg-ink px-5 py-2.5 text-sm font-semibold text-chalk hover:bg-ink/85"
+        >
+          See your independence profile
+        </Link>
       </section>
 
-      {/* Accuracy and hint independence: equal billing (§6) */}
+      {/* The two dimensions that matter most, each with its sample size. */}
       <div className="grid grid-cols-2 gap-4">
         <section className="plane p-4">
           <p className="num font-display text-3xl font-extrabold">
-            {Math.round(accuracyPct)}%
+            {unaidedAccuracy === null ? "—" : `${unaidedAccuracy}%`}
           </p>
-          <p className="text-sm text-slate">accuracy</p>
-          {total > 0 && <CategoryBars rows={perCategory((a) => a.correct)} />}
+          <p className="text-sm text-slate">
+            solved yourself, and right
+            {unaided.length > 0 && (
+              <>
+                {" "}
+                <span className="num">
+                  ({unaidedCorrect}/{unaided.length})
+                </span>
+              </>
+            )}
+          </p>
+          {unaided.length > 0 && (
+            <CategoryBars rows={perCategory((a) => a.hints_used === 0 && a.correct)} />
+          )}
         </section>
         <section className="plane p-4">
           <p className="num font-display text-3xl font-extrabold">
-            {Math.round(independencePct)}%
+            {hintReliance === null ? "—" : `${hintReliance}%`}
           </p>
-          <p className="text-sm text-slate">solved with no hints</p>
+          <p className="text-sm text-slate">
+            needed a hint
+            {total > 0 && (
+              <>
+                {" "}
+                <span className="num">
+                  ({withHints}/{total})
+                </span>
+              </>
+            )}
+          </p>
           {total > 0 && (
-            <CategoryBars rows={perCategory((a) => a.hints_used === 0)} hue="gold" />
+            <CategoryBars rows={perCategory((a) => a.hints_used > 0)} hue="gold" />
           )}
         </section>
       </div>
@@ -149,35 +144,36 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 gap-4">
         <section className="plane p-4">
           <p className="num font-display text-3xl font-extrabold">
-            {thinkTime !== null ? `${thinkTime}s` : "—"}
+            {accuracyPct}%
           </p>
-          <p className="text-sm text-slate">median think time</p>
+          <p className="text-sm text-slate">accuracy, hints and all</p>
         </section>
         <section className="plane p-4">
           <p className="num font-display text-3xl font-extrabold">
-            {profile?.streak_current ?? 0}
+            {thinkTime !== null ? `${thinkTime}s` : "—"}
           </p>
-          <p className="text-sm text-slate">
-            day streak · best <span className="num">{profile?.streak_longest ?? 0}</span>
-          </p>
+          <p className="text-sm text-slate">median think time, unaided</p>
         </section>
       </div>
 
-      {/* Radar */}
+      <ProxyNote variant="block">
+        These are counts of what you did in Anchor over the last 90 days. They
+        move as you play, and small samples wobble.
+      </ProxyNote>
+
+      {/* Radar of the six per-skill ratings — six separate ratings, not a
+          composite, so they survive R1. */}
       <section className="plane p-4">
-        <h2 className="text-sm font-semibold">The six categories</h2>
+        <h2 className="text-sm font-semibold">Six skills, rated separately</h2>
         <CategoryRadar
           ratings={(ratings ?? []).map((r) => ({
             category: r.category,
             rating: r.rating,
           }))}
         />
-      </section>
-
-      {/* Score over time */}
-      <section className="plane p-4">
-        <h2 className="mb-3 text-sm font-semibold">Score over time</h2>
-        <ScoreOverTime points={scorePoints} />
+        <ProxyNote>
+          Each skill has its own chess-style rating. There is no combined number.
+        </ProxyNote>
       </section>
 
       {/* Strengths / weaknesses */}

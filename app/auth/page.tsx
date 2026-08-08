@@ -13,6 +13,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   reset_expired: "That reset link has expired. Request a new one from the sign-in form.",
 };
 
+const NOTICES: Record<string, string> = {
+  deleted: "Your account and all its data have been deleted.",
+};
+
 export default async function AuthPage({
   searchParams,
 }: {
@@ -56,7 +60,24 @@ export default async function AuthPage({
         <p className="mt-4 text-center text-xs text-slate">
           Five puzzles a day. The first 45 seconds are yours alone.
         </p>
+        {NOTICES[first(params.deleted) ? "deleted" : ""] ? (
+          <p className="mt-2 text-center text-xs" role="status">
+            {NOTICES.deleted}
+          </p>
+        ) : null}
       </div>
+
+      <footer className="flex justify-center gap-4 pb-2 text-xs text-slate">
+        <Link className="underline" href="/privacy">
+          Privacy
+        </Link>
+        <Link className="underline" href="/terms">
+          Terms
+        </Link>
+        <Link className="underline" href="/support">
+          Support
+        </Link>
+      </footer>
     </main>
   );
 }

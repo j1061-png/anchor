@@ -7,13 +7,9 @@ import { eloUpdate, cognitiveScore, nudgeMedian, loadRatings } from "@/lib/engin
 import { advanceStreak, localDate } from "@/lib/streak";
 import { evaluateAchievements } from "@/lib/achievements";
 import { generateRecapFeedback, type RecapPuzzleSummary } from "@/lib/ai";
-import {
-  HINT_XP_COST,
-  levelForXp,
-  xpForPuzzle,
-  type PuzzleType,
-  type SessionSlot,
-} from "@/lib/types";
+import { scoreAttempt } from "@/lib/research/xp";
+import type { HelpLevel } from "@/lib/research/types";
+import { levelForXp, type PuzzleType, type SessionSlot } from "@/lib/types";
 
 const bodySchema = z.object({
   slotIndex: z.number().int().min(0).max(4),
@@ -126,11 +122,41 @@ export async function POST(
   });
   const ratingDelta = newRating - oldRating;
 
-  // XP: base minus hint costs, floored at 2; practice pays half (§4).
-  let xp = xpForPuzzle(slot.difficulty, correct);
-  for (const tier of tiersUsed) xp -= HINT_XP_COST[tier];
-  xp = Math.max(2, xp);
-  if (session.type === "practice") xp = Math.max(1, Math.round(xp / 2));
+  // XP is independence-weighted, not completion-weighted (RESEARCH-SPEC R4,
+  // §10). Map the puzzle-session signals onto the research scheme: a solve
+  // with no hints is independent (+10); a solve after a wrong attempt is
+  // persistence (+5) and self-correction (+5); a hint taken after a genuine
+  // attempt and then solved is strategic help-seeking (+2), never punished as
+  // avoidance. Completion alone earns nothing.
+  const puzzleAttempts = parsed.data.attempts ?? 1;
+  const hadEarlierError = puzzleAttempts > 1 && correct;
+  // Hint tiers 1/2/3 map onto the graduated help ladder.
+  const TIER_HELP: Record<1 | 2 | 3, HelpLevel> = {
+    1: "question",
+    2: "narrow",
+    3: "next_step",
+  };
+  const maxHelpLevel: HelpLevel =
+    tiersUsed.length === 0
+      ? "none"
+      : TIER_HELP[Math.max(...tiersUsed) as 1 | 2 | 3];
+  const xpResult = scoreAttempt({
+    unaided: tiersUsed.length === 0,
+    outcome: correct ? "correct" : "incorrect",
+    attemptsCount: puzzleAttempts,
+    maxHelpLevel,
+    selfCorrected: hadEarlierError,
+    persistedAfterError: hadEarlierError,
+    selfExplanation: false, // puzzle sessions do not collect one
+    itemKind: "practice",
+    strategicHintUse: tiersUsed.length > 0 && correct,
+  });
+  // Practice keeps its half-weight product rule (§4): it moves ratings but is
+  // a lighter commitment than the daily.
+  const xp =
+    session.type === "practice"
+      ? Math.round(xpResult.total / 2)
+      : xpResult.total;
 
   // The insert is the dedup gate: the unique index on (session_id, seed)
   // rejects a concurrent duplicate BEFORE any score/xp write happens. The
