@@ -2,10 +2,10 @@ import Image from "next/image";
 
 type LogoProps = {
   className?: string;
-  /** Show the lockup tagline under the wordmark. */
   withTagline?: boolean;
-  /** Mark height in pixels. Wordmark scales with it. */
   size?: "sm" | "md" | "lg" | "hero";
+  /** Light text for dark backgrounds */
+  inverted?: boolean;
 };
 
 const MARK: Record<NonNullable<LogoProps["size"]>, number> = {
@@ -19,6 +19,7 @@ export function MarketingLogo({
   className = "",
   withTagline = false,
   size = "md",
+  inverted = false,
 }: LogoProps) {
   const mark = MARK[size];
   const stacked = size === "lg" || size === "hero";
@@ -30,6 +31,7 @@ export function MarketingLogo({
         : size === "sm"
           ? "text-lg"
           : "text-xl";
+  const titleColor = inverted ? "text-[var(--mkt-ink)]" : "text-[#0B1F3A]";
 
   return (
     <div
@@ -47,15 +49,17 @@ export function MarketingLogo({
           className="select-none"
         />
         <span
-          className={`font-display font-extrabold tracking-tight text-[#0B1F3A] ${titleClass}`}
+          className={`font-display font-extrabold tracking-tight ${titleColor} ${titleClass}`}
         >
           Anchor
         </span>
       </div>
       {withTagline ? (
         <p className="mt-3 text-center text-[0.68rem] font-bold uppercase tracking-[0.22em] sm:text-xs">
-          <span className="text-[#3D4A5C]">Lock distractions. </span>
-          <span className="text-[#3B6FE0]">Anchor your focus.</span>
+          <span className={inverted ? "text-[var(--mkt-ink-soft)]" : "text-[#3D4A5C]"}>
+            Lock distractions.{" "}
+          </span>
+          <span className="text-[#6B9BF0]">Anchor your focus.</span>
         </p>
       ) : null}
     </div>
