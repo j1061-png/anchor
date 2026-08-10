@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MarketingSiteNav } from "../site-nav";
 import { MarketingLogo } from "../logo";
 import { Eyebrow, Headline, Lead, PhoneFrame } from "../ui";
 import { usePrefersReducedMotion } from "../hooks";
@@ -81,6 +82,9 @@ export function HeroSection() {
             <a href="#attention-problem" className="mkt-btn mkt-btn--ghost">
               See the research
             </a>
+            <Link href="/research" className="mkt-btn mkt-btn--ghost">
+              Open full deck
+            </Link>
           </div>
           <div className="mkt-fragment-bar" aria-hidden>
             {[0, 1, 2, 3].map((n) => (
@@ -148,15 +152,7 @@ export function HeroSection() {
         </div>
       </div>
 
-      <nav className="mkt-nav" aria-label="Site">
-        <Link href="/" className="mkt-nav__brand">
-          <MarketingLogo variant="mark" size="sm" />
-          <span className="sr-only">Anchor</span>
-        </Link>
-        <Link href="/auth?mode=signup" className="mkt-nav__cta">
-          Start training
-        </Link>
-      </nav>
+      <MarketingSiteNav />
     </header>
   );
 }

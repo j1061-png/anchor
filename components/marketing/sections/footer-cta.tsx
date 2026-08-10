@@ -17,11 +17,17 @@ export function FooterCta() {
           <Link href="/auth?mode=signup" className="mkt-btn mkt-btn--focus">
             Start training
           </Link>
+          <Link href="/research" className="mkt-btn mkt-btn--ghost">
+            Research deck
+          </Link>
           <a href="#experiment" className="mkt-btn mkt-btn--ghost">
-            Run the attention test
+            Attention test
           </a>
         </div>
         <p className="mkt-body" style={{ marginTop: "2.5rem", fontSize: "0.75rem" }}>
+          <Link href="/about" style={{ color: "var(--mkt-muted)", marginRight: "1rem" }}>
+            About
+          </Link>
           <Link href="/privacy" style={{ color: "var(--mkt-muted)", marginRight: "1rem" }}>
             Privacy
           </Link>
