@@ -8,7 +8,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "ios:prepare": "node scripts/ios-prepare.mjs",
+    "ios:sync": "npm run ios:prepare && npx cap sync ios",
+    "ios:sync:dev": "npm run ios:prepare && CAP_SERVER_URL=http://127.0.0.1:3000 npx cap sync ios",
+    "ios:open": "npx cap open ios"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

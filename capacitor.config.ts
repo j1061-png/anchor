@@ -15,9 +15,13 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: "never",
   },
-  // Dev-only live preview against the Next dev server:
-  //   CAP_SERVER_URL=http://localhost:5730 npx cap sync ios
-  // Unset (the default) for store builds, which bundle webDir instead.
+// Dev-only live preview against the Next dev server (iOS Simulator on your Mac):
+//   npm run dev          # terminal 1 — keep running
+//   npm run ios:sync:dev # terminal 2 — once, or after native dep changes
+//   npm run ios:open     # opens Xcode → pick a simulator → Run (▶)
+//
+// Physical iPhone: replace 127.0.0.1 with your Mac's LAN IP, e.g.
+//   CAP_SERVER_URL=http://192.168.1.42:3000 npm run ios:sync
   ...(process.env.CAP_SERVER_URL
     ? { server: { url: process.env.CAP_SERVER_URL, cleartext: true } }
     : {}),

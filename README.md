@@ -18,7 +18,7 @@ Recharts, Zod. Deploys to Vercel.
      exposed to the client)
 3. **Auth → URL configuration**: set Site URL to your production URL, and add
    redirect URLs:
-   - `http://localhost:5730/auth/callback` (dev)
+   - `http://localhost:3000/auth/callback` (dev)
    - `https://<your-domain>/auth/callback` (prod)
 4. **Auth → Providers → Email**: leave "Confirm email" on. The app shows a
    real "check your inbox" state after signup.
@@ -111,8 +111,39 @@ npm test                     # generator + streak unit tests
 npm run build                # must pass clean before deploy
 ```
 
-`NEXT_PUBLIC_SITE_URL` is `http://localhost:5730` in dev (or whatever port
+`NEXT_PUBLIC_SITE_URL` is `http://localhost:3000` in dev (or whatever port
 you run on), your production URL in prod.
+
+### Preview in Xcode (iOS Simulator)
+
+The iOS project lives in `ios/App/`. **Xcode runs on your Mac only** — use
+**Move to Local** in Cursor if you're on a cloud agent.
+
+**Live preview** (recommended — full Next.js app with API routes):
+
+```bash
+# Terminal 1
+npm run dev
+
+# Terminal 2 — wire Capacitor to your Mac's dev server, then open Xcode
+npm run ios:sync:dev
+npm run ios:open
+```
+
+In Xcode: choose an **iPhone simulator** → **Run (▶)**. The app loads
+`http://127.0.0.1:3000` from your Mac.
+
+**Physical iPhone** on the same Wi‑Fi: use your Mac's LAN IP instead of
+127.0.0.1:
+
+```bash
+CAP_SERVER_URL=http://192.168.x.x:3000 npm run ios:sync
+npm run ios:open
+```
+
+Re-run `npm run ios:sync:dev` after changing `CAP_SERVER_URL` or Capacitor
+plugins. A bundled offline build (static export) is documented in
+`APP-STORE.md` but not fully wired yet.
 
 ## 7. Deploy to Vercel
 
