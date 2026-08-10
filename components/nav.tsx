@@ -74,6 +74,7 @@ const SECONDARY = [
   { href: "/dashboard", label: "Skill ratings" },
   { href: "/leaderboard", label: "Most improved" },
   { href: "/about-the-evidence", label: "The evidence" },
+  { href: "/iphone", label: "iPhone mode" },
 ] as const;
 
 export interface NavProps {
