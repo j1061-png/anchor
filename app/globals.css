@@ -158,3 +158,13 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Native shell (iPhone notch): headers pad down into the safe area and the
+   secondary strip sticks below the taller bar. env() is 0 in web browsers,
+   so none of this changes the site. */
+header.sticky {
+  padding-top: env(safe-area-inset-top);
+}
+.sticky.top-14 {
+  top: calc(3.5rem + env(safe-area-inset-top));
+}

@@ -15,12 +15,15 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: "never",
   },
-  // Dev-only live preview against the Next dev server:
-  //   CAP_SERVER_URL=http://localhost:5730 npx cap sync ios
-  // Unset (the default) for store builds, which bundle webDir instead.
-  ...(process.env.CAP_SERVER_URL
-    ? { server: { url: process.env.CAP_SERVER_URL, cleartext: true } }
-    : {}),
+  // v1 store build: the shell loads the hosted app (fast-submit track).
+  // webDir still ships out/offline.html, shown via errorPath when the
+  // network is down so the reviewer never sees a WebKit error page.
+  // Override for local dev: CAP_SERVER_URL=http://localhost:5730 npx cap sync ios
+  server: {
+    url: process.env.CAP_SERVER_URL ?? "https://anchor-one-zeta.vercel.app",
+    errorPath: "offline.html",
+    ...(process.env.CAP_SERVER_URL ? { cleartext: true } : {}),
+  },
 };
 
 export default config;

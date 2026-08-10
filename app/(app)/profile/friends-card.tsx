@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -278,6 +279,13 @@ export function FriendsCard() {
           {actionError}
         </p>
       )}
-    </section>
+          <p className="mt-4 text-xs text-slate">
+        Someone&apos;s name or messages a problem?{" "}
+        <Link className="underline" href="/support">
+          Report it
+        </Link>
+        {" "}and a person will deal with it.
+      </p>
+</section>
   );
 }

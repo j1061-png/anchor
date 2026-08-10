@@ -22,7 +22,7 @@ export default function PrivacyPage() {
           <li>
             <strong>Account details.</strong> Your email address, display name,
             optional school name, year group and avatar. If you sign in with
-            Google, we receive your email and name from Google.
+            Apple, we receive your name and email from Apple.
           </li>
           <li>
             <strong>Learning activity.</strong> Your puzzle and problem

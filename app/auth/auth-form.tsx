@@ -219,12 +219,6 @@ export function AuthForm({
             </form>
           )}
 
-          <div className="my-5 flex items-center gap-3" aria-hidden>
-            <span className="h-px flex-1 bg-slate/40" />
-            <span className="text-xs text-slate">or</span>
-            <span className="h-px flex-1 bg-slate/40" />
-          </div>
-
           <OAuthButtons next={next} />
         </>
       )}

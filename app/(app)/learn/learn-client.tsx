@@ -25,6 +25,7 @@ import { StructuredFeedbackPanel } from "@/components/learn/structured-feedback"
 import { TutorPanel, type TutorMessage } from "@/components/learn/tutor-panel";
 import { AiConsentCard, useAiConsent } from "@/components/learn/ai-consent";
 import { XpBreakdown } from "@/components/learn/xp-breakdown";
+import { hapticSuccess, hapticTap } from "@/lib/native";
 import type {
   AttemptOutcome,
   AttemptState,
@@ -256,10 +257,12 @@ export function LearnClient({
         );
 
         if (res.outcome === "correct") {
+          hapticSuccess();
           setBusy(null);
           await finish(state.attemptId);
           return;
         }
+        hapticTap();
       } catch (e) {
         applyFailure(e, "That attempt didn't save. Try submitting it again.");
       } finally {
