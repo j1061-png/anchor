@@ -1,0 +1,112 @@
+/* Marketing layer — brand navy from the logo, graph-paper stays underneath. */
+:root {
+  --mkt-navy: #0b1f3a;
+  --mkt-blue: #3b6fe0;
+  --mkt-blue-soft: #8eb4f5;
+  --mkt-mist: #e8eef8;
+}
+
+.mkt-shell {
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(
+      1200px 600px at 50% -10%,
+      color-mix(in srgb, var(--mkt-blue) 16%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      to right,
+      rgb(22 25 15 / 0.05) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      rgb(22 25 15 / 0.05) 1px,
+      transparent 1px
+    );
+  background-size: auto, 8px 8px, 8px 8px;
+  background-attachment: fixed;
+}
+
+.mkt-hero-plane {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.mkt-hero-plane::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(
+      900px 480px at 70% 20%,
+      color-mix(in srgb, var(--mkt-blue-soft) 35%, transparent),
+      transparent 65%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--mkt-mist) 70%, var(--paper)) 0%,
+      var(--paper) 72%
+    );
+}
+
+@keyframes mkt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes mkt-mark-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mkt-reveal {
+  animation: mkt-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mkt-mark-in {
+  animation: mkt-mark-in 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mkt-stat {
+  font-family: var(--font-martian-mono), monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  color: var(--mkt-navy);
+}
+
+.mkt-rule {
+  height: 1px;
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.mkt-cite {
+  font-size: 0.75rem;
+  color: var(--slate);
+  font-style: italic;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mkt-reveal,
+  .mkt-mark-in {
+    animation: none !important;
+  }
+}

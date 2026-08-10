@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" fill="none" role="img" aria-label="Anchor">
+  <!-- Anchor silhouette (navy): ring/shackle, shank, stock, flukes -->
+  <g fill="#0B1F3A">
+    <!-- Top shackle / ring -->
+    <path d="M100 14c-28 0-50 20.5-50 48v22h22V62c0-14.4 12.1-26 28-26s28 11.6 28 26v22h22V62c0-27.5-22-48-50-48z"/>
+    <!-- Shank + crossbar stock behind lock -->
+    <rect x="90" y="58" width="20" height="118" rx="4"/>
+    <rect x="52" y="96" width="96" height="16" rx="4"/>
+    <!-- Flukes -->
+    <path d="M100 168c-26 0-48-10-64-26l14-14c12 11 28 18 50 18s38-7 50-18l14 14c-16 16-38 26-64 26z"/>
+    <path d="M36 142l-18 8 10 22c18-4 32-14 42-26l-14-14c-6 5-13 9-20 10z"/>
+    <path d="M164 142l18 8-10 22c-18-4-32-14-42-26l14-14c6 5 13 9 20 10z"/>
+    <!-- Crown tip under flukes -->
+    <circle cx="100" cy="178" r="8"/>
+  </g>
+
+  <!-- Padlock body in front -->
+  <rect x="62" y="78" width="76" height="88" rx="14" fill="url(#lockGrad)"/>
+  <!-- Keyhole -->
+  <circle cx="100" cy="112" r="14" fill="#0B1F3A"/>
+  <path fill="#0B1F3A" d="M93 118h14l-3 28h-8l-3-28z"/>
+
+  <defs>
+    <linearGradient id="lockGrad" x1="100" y1="78" x2="100" y2="166" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9BB8F6"/>
+      <stop offset="0.45" stop-color="#5B8AE8"/>
+      <stop offset="1" stop-color="#2F62D4"/>
+    </linearGradient>
+  </defs>
+</svg>
