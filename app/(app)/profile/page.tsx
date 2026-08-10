@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signOutAction } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,20 @@ export default async function ProfilePage() {
           Sign out
         </Button>
       </form>
+
+      {/* Policy links must be reachable inside the app (5.1.1(i)), not just
+          from the signed-out auth screen. */}
+      <footer className="flex gap-4 pb-2 text-xs text-slate">
+        <Link className="underline" href="/privacy">
+          Privacy policy
+        </Link>
+        <Link className="underline" href="/terms">
+          Terms of use
+        </Link>
+        <Link className="underline" href="/support">
+          Support
+        </Link>
+      </footer>
     </div>
   );
 }

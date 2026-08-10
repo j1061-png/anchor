@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server.js";
 import { createServerClient } from "@supabase/ssr";
 
 const GUARDED = ["/today", "/dashboard", "/leaderboard", "/profile", "/session", "/practice", "/onboarding"];
@@ -6,9 +6,15 @@ const GUARDED = ["/today", "/dashboard", "/leaderboard", "/profile", "/session",
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return response;
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -48,7 +54,10 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+export default middleware;
+
 export const config = {
+  runtime: "nodejs",
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|api/share|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],

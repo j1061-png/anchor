@@ -498,6 +498,44 @@ function gradeAgainstKey(item: GradableItem, answer: string): GradeResult {
 }
 
 /**
+ * Students are told to write the answer AND how they got it in one box, so the
+ * grader must find the answer inside the prose rather than demand it alone.
+ * Extraction is pure string slicing — no model, no guessing (I6) — and it can
+ * only ever ADD a way to be correct: a candidate is used only when it grades
+ * correct, never to justify marking the full text wrong.
+ */
+function answerCandidates(raw: string, keyType: string): string[] {
+  const out: string[] = [];
+  const push = (piece: string | undefined) => {
+    const trimmed = (piece ?? "").trim();
+    if (trimmed && trimmed !== raw.trim() && !out.includes(trimmed)) out.push(trimmed);
+  };
+
+  const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const firstLine = lines[0] ?? raw;
+  const lastLine = lines[lines.length - 1] ?? raw;
+
+  for (const line of [firstLine, lastLine]) {
+    push(line);
+    // "240/30 = 8" — the answer follows the final equals sign.
+    if (line.includes("=")) push(line.split("=").pop());
+    // "8 - because density is mass over volume" / "nucleus: it holds the DNA"
+    const beforeExplanation = line.split(
+      /\s+[-–—]\s+|\s*[:;]\s+|\s+because\b|\s+since\b/i,
+      1,
+    )[0];
+    push(beforeExplanation);
+    if (keyType !== "set") {
+      // A comma ends a scalar answer; set keys use commas as syntax.
+      push(beforeExplanation?.split(",", 1)[0]);
+      // "MgCl2. Two chlorides balance the 2+ charge."
+      push(beforeExplanation?.split(/\.\s+/, 1)[0]);
+    }
+  }
+  return out;
+}
+
+/**
  * The only correctness authority in the product.
  *
  * A correct answer is never called low effort. Otherwise an empty, repeated or
@@ -511,6 +549,12 @@ export function gradeAnswer(
 ): GradeResult {
   const graded = gradeAgainstKey(item, answer);
   if (graded.outcome === "correct") return graded;
+
+  // The full text missed: look for the answer inside answer-plus-working prose.
+  for (const candidate of answerCandidates(answer, item.answer_key.type)) {
+    const candidateGrade = gradeAgainstKey(item, candidate);
+    if (candidateGrade.outcome === "correct") return candidateGrade;
+  }
 
   // A single numeral, or a single letter on a multiple-choice item, is a real
   // attempt even when it is wrong. Everything else short is filler.

@@ -15,6 +15,12 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: "never",
   },
+  // Dev-only live preview against the Next dev server:
+  //   CAP_SERVER_URL=http://localhost:5730 npx cap sync ios
+  // Unset (the default) for store builds, which bundle webDir instead.
+  ...(process.env.CAP_SERVER_URL
+    ? { server: { url: process.env.CAP_SERVER_URL, cleartext: true } }
+    : {}),
 };
 
 export default config;
