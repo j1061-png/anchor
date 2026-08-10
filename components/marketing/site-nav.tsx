@@ -5,9 +5,8 @@ import { usePathname } from "next/navigation";
 import { MarketingLogo } from "./logo";
 
 const LINKS = [
-  { href: "/#adoption", label: "Evidence" },
-  { href: "/research", label: "Deck" },
-  { href: "/about", label: "About" },
+  { href: "/#deck", label: "Research", match: ["/", "/research"] },
+  { href: "/about", label: "About", match: ["/about"] },
 ] as const;
 
 export function MarketingSiteNav() {
@@ -20,11 +19,11 @@ export function MarketingSiteNav() {
         <span className="sr-only">Anchor home</span>
       </Link>
       <div className="mkt-nav__links">
-        {LINKS.map(({ href, label }) => (
+        {LINKS.map(({ href, label, match }) => (
           <Link
             key={href}
             href={href}
-            className={`mkt-nav__link ${pathname === href || pathname.startsWith(`${href}/`) ? "mkt-nav__link--active" : ""}`}
+            className={`mkt-nav__link ${match.some((m) => pathname === m || pathname.startsWith(`${m}/`)) ? "mkt-nav__link--active" : ""}`}
           >
             {label}
           </Link>

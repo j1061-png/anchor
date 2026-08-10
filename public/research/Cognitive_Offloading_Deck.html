@@ -1400,6 +1400,12 @@ body.modal-open #decktabs{opacity:0; pointer-events:none;}
   if (window.visualViewport) window.visualViewport.addEventListener('resize', fit);
   fit();
 
+  var embed = /(?:\?|&)embed=1(?:&|$)/.test(location.search);
+  if (embed) {
+    var ax = document.getElementById('anchor-exit');
+    if (ax) ax.style.display = 'none';
+  }
+
   /* ---------- dot navigation ---------- */
   function titleOf(i){
     var h = slides[i] && slides[i].querySelector('h1');
@@ -1472,8 +1478,24 @@ body.modal-open #decktabs{opacity:0; pointer-events:none;}
     setAccent(s.getAttribute('data-accent'));
     countUp(s);
     if (typeof syncNav === 'function') syncNav();
+    if (window.parent !== window) {
+      try {
+        window.parent.postMessage({
+          type: 'anchor-deck-slide',
+          slide: cur,
+          total: slides.length,
+          accent: s.getAttribute('data-accent') || 'purple',
+          title: titleOf(cur)
+        }, '*');
+      } catch (err) {}
+    }
     if (cur === 8 && !confettiDone && !reduced){ confettiDone = true; setTimeout(burst, 900); }
   }
+
+  window.addEventListener('message', function(e){
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'anchor-deck-go' && typeof e.data.slide === 'number') go(e.data.slide);
+  });
 
   /* ---------- grid overview ---------- */
   function buildGrid(){
@@ -1905,7 +1927,7 @@ body.modal-open #decktabs{opacity:0; pointer-events:none;}
 
   var seenTour = false;
   try{ seenTour = !!localStorage.getItem('cod_tour_v1'); }catch(err){}
-  if (!seenTour && location.hash !== '#paper' && location.hash !== '#process'){
+  if (!seenTour && !embed && location.hash !== '#paper' && location.hash !== '#process'){
     setTimeout(showTour, 900);
   }
 
@@ -1930,6 +1952,21 @@ body.modal-open #decktabs{opacity:0; pointer-events:none;}
   go(isNaN(h) ? 0 : h - 1);
   if (rawHash === '#paper') setSection('paper');
   else if (rawHash === '#process') setSection('process');
+  if (embed) {
+    setTimeout(function(){
+      if (window.parent !== window) {
+        try {
+          window.parent.postMessage({
+            type: 'anchor-deck-slide',
+            slide: cur,
+            total: slides.length,
+            accent: slides[cur] ? slides[cur].getAttribute('data-accent') || 'purple' : 'purple',
+            title: titleOf(cur)
+          }, '*');
+        } catch (err) {}
+      }
+    }, 100);
+  }
 })();
 </script>
 

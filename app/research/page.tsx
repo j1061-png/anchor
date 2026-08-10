@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { MarketingSiteNav } from "@/components/marketing/site-nav";
+import { ResearchPageClient } from "./research-client";
 import "../marketing.css";
 
 export const metadata: Metadata = {
@@ -13,14 +13,5 @@ export const viewport: Viewport = {
 };
 
 export default function ResearchPage() {
-  return (
-    <div className="mkt-root mkt-root--deck mkt-deck-shell">
-      <MarketingSiteNav />
-      <iframe
-        title="Cognitive Offloading research deck"
-        src="/research/Cognitive_Offloading_Deck.html"
-        className="mkt-deck-frame mkt-deck-frame--full"
-      />
-    </div>
-  );
+  return <ResearchPageClient />;
 }
