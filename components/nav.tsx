@@ -225,6 +225,15 @@ export function Nav({ displayName, avatarEmoji, streak }: NavProps) {
               </span>
             </div>
             <StreakCounter streak={streak} />
+            <Link
+              href="/iphone"
+              aria-label="iPhone mode"
+              title="iPhone mode"
+              className="flex min-h-11 items-center gap-1 text-sm font-semibold text-slate hover:text-ink"
+            >
+              <span aria-hidden>📱</span>
+              <span className="hidden md:inline">iPhone</span>
+            </Link>
           </div>
         </div>
       </header>
