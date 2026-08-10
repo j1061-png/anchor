@@ -12,8 +12,13 @@ export type ResearchSource = {
   caveat?: string;
 };
 
-export const DECK_URL =
-  "https://cognitive-offloading-presentation.vercel.app/Cognitive_Offloading_Deck.html";
+export const DECK_URL = "/research/Cognitive_Offloading_Deck.html";
+
+export function getSource(id: string): ResearchSource {
+  const s = SOURCES.find((x) => x.id === id);
+  if (!s) throw new Error(`Unknown source: ${id}`);
+  return s;
+}
 
 export const SOURCES: ResearchSource[] = [
   {

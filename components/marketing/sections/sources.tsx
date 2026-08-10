@@ -1,38 +1,33 @@
 "use client";
 
+import Link from "next/link";
 import { DECK_URL, SOURCES } from "@/lib/marketing/research-corpus";
-import { Section, Eyebrow, Headline, Lead } from "../ui";
+import { RevealSection } from "../primitives";
 
 export function SourcesSection() {
   return (
-    <Section id="sources" className="mkt-section--paper">
-      <Eyebrow>Research sources</Eyebrow>
-      <Headline className="mkt-headline--wide">Every claim, named</Headline>
-      <Lead>
-        Expand any entry. Numbers on this site come from the cognitive-offloading
-        review by Malek Zahran &amp; Abdallah El Dessouky — not from marketing
-        copy.
-      </Lead>
-
-      <p className="mkt-body" style={{ marginTop: "1.5rem" }}>
-        <a
-          href={DECK_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ color: "var(--mkt-blue-dim)", fontWeight: 600, textDecoration: "underline" }}
-        >
-          Full research deck (22 sources, 9 peer-reviewed studies)
-        </a>
+    <RevealSection id="sources">
+      <p className="mkt-eyebrow mkt-eyebrow--glow">Bibliography</p>
+      <h2 className="mkt-headline mkt-headline--wide">All 22 sources — expand any entry</h2>
+      <p className="mkt-lead">
+        Every number on this site comes from the cognitive-offloading review by Malek
+        Zahran &amp; Abdallah El Dessouky — not from marketing copy.
       </p>
 
-      <div style={{ marginTop: "2rem" }}>
+      <p className="mkt-body" style={{ marginTop: "1.25rem" }}>
+        <Link href={DECK_URL} className="mkt-inline-link">
+          Full research deck (9 peer-reviewed studies, intervention scorecard)
+        </Link>
+      </p>
+
+      <div className="mkt-sources-list">
         {SOURCES.map((s) => (
           <details key={s.id} className="mkt-source">
             <summary>
               <span>
                 {s.authors} ({s.year > 0 ? s.year : s.publication})
               </span>
-              <span style={{ color: "var(--mkt-blue-dim)", fontSize: "0.75rem" }}>{s.topic}</span>
+              <span className="mkt-source__topic">{s.topic}</span>
             </summary>
             <div className="mkt-source__body">
               <p>{s.detail}</p>
@@ -45,6 +40,6 @@ export function SourcesSection() {
           </details>
         ))}
       </div>
-    </Section>
+    </RevealSection>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Section, Eyebrow, Headline } from "../ui";
+import { RevealSection } from "../primitives";
 
 const STEPS = [
   {
@@ -35,11 +35,12 @@ export function ProductWalkthroughSection() {
   const current = STEPS[step]!;
 
   return (
-    <Section id="how-it-works" dark>
-      <Eyebrow>How Anchor works</Eyebrow>
-      <Headline>Simulated session</Headline>
+    <RevealSection id="how-it-works">
+      <p className="mkt-eyebrow mkt-eyebrow--glow">The product</p>
+      <h2 className="mkt-headline">How Anchor responds to the research</h2>
       <p className="mkt-lead">
-        Click through. This is the product logic — not a screenshot gallery.
+        Click through. Each step maps to an intervention in the review — attempt-first,
+        guardrailed tutor, brain-only sessions.
       </p>
 
       <div className="mkt-steps" role="tablist" aria-label="Walkthrough steps">
@@ -87,6 +88,6 @@ export function ProductWalkthroughSection() {
           )}
         </div>
       </div>
-    </Section>
+    </RevealSection>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { RESEARCH_THEMES, SOURCES } from "@/lib/marketing/research-corpus";
-import { Section, Eyebrow, Headline, Lead } from "../ui";
+import { GlassCard, RevealSection, WeaknessPanel } from "../primitives";
 
 function ThemeVisualization({ themeId }: { themeId: string }) {
   const [offloadChoice, setOffloadChoice] = useState<"self" | "phone" | null>(null);
@@ -13,7 +13,7 @@ function ThemeVisualization({ themeId }: { themeId: string }) {
   if (themeId === "attention") {
     return (
       <div className="mkt-theme-viz" aria-label="Task interrupted by breaks">
-        <p className="mkt-body" style={{ color: "var(--mkt-navy)", marginBottom: "0.75rem" }}>
+        <p className="mkt-body mkt-theme-viz-label">
           Continuous work on a single task
         </p>
         <div className="mkt-timeline">
@@ -195,15 +195,15 @@ export function ResearchThemesSection() {
   const refs = theme.sourceIds.map((id) => SOURCES.find((s) => s.id === id)!);
 
   return (
-    <Section id="research" className="mkt-section--paper">
-      <Eyebrow>Why Anchor exists</Eyebrow>
-      <Headline className="mkt-headline--wide">
-        The research behind the problem
-      </Headline>
-      <Lead>
-        Not a wall of cards — seven themes from the cognitive-offloading review.
+    <RevealSection id="themes">
+      <p className="mkt-eyebrow mkt-eyebrow--glow">Seven research themes</p>
+      <h2 className="mkt-headline mkt-headline--wide">
+        The argument behind Anchor — interactive
+      </h2>
+      <p className="mkt-lead">
+        Not a wall of cards. Seven themes from the cognitive-offloading review.
         Each one is interactive. Each claim traces to a named study.
-      </Lead>
+      </p>
 
       <div className="mkt-theme-tabs" role="tablist" aria-label="Research themes">
         {RESEARCH_THEMES.map((t) => (
@@ -220,28 +220,17 @@ export function ResearchThemesSection() {
         ))}
       </div>
 
-      <div className="mkt-theme-panel" role="tabpanel">
-        <h3
-          style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: 800,
-            fontSize: "1.35rem",
-            color: "var(--mkt-navy)",
-          }}
-        >
-          {theme.hook}
-        </h3>
-        <p className="mkt-body" style={{ marginTop: "0.65rem", color: "#4a5568" }}>
-          {theme.body}
-        </p>
+      <GlassCard accent="purple" className="mkt-theme-panel">
+        <h3 className="mkt-theme-panel__hook">{theme.hook}</h3>
+        <p className="mkt-body">{theme.body}</p>
         {"caveat" in theme && theme.caveat ? (
-          <p className="mkt-caveat">{theme.caveat}</p>
+          <WeaknessPanel>{theme.caveat}</WeaknessPanel>
         ) : null}
         <ThemeVisualization themeId={theme.id} />
-        <ul style={{ marginTop: "1.25rem", fontSize: "0.75rem", color: "#6b7280" }}>
+        <ul className="mkt-theme-refs">
           {refs.map((r) => (
-            <li key={r.id} style={{ marginTop: "0.35rem" }}>
-              <strong style={{ color: "var(--mkt-navy)" }}>
+            <li key={r.id}>
+              <strong>
                 {r.authors} ({r.year > 0 ? r.year : r.publication})
               </strong>
               {" — "}
@@ -249,7 +238,7 @@ export function ResearchThemesSection() {
             </li>
           ))}
         </ul>
-      </div>
-    </Section>
+      </GlassCard>
+    </RevealSection>
   );
 }

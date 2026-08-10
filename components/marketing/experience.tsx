@@ -1,26 +1,29 @@
 "use client";
 
-import { HeroSection } from "./sections/hero";
-import { AttentionProblemSection } from "./sections/attention-problem";
-import { AttentionTestSection } from "./sections/attention-test";
-import { PhoneEnvironmentSection } from "./sections/phone-environment";
-import { AnchorRevealSection } from "./sections/anchor-reveal";
+import { ResearchHeroSection } from "./sections/research-hero";
+import { AdoptionStatsSection } from "./sections/adoption-stats";
+import { BastaniRctSection } from "./sections/bastani-rct";
+import { DeskillingSection } from "./sections/deskilling-chart";
+import { ResearchThemesSection } from "./sections/research-themes";
+import { DeckEmbedSection } from "./sections/deck-embed";
+import { SourcesSection } from "./sections/sources";
 import { ProductWalkthroughSection } from "./sections/product-walkthrough";
-import { ManifestoSection } from "./sections/manifesto";
-import { ResearchTeaserSection } from "./sections/research-teaser";
 import { FooterCta } from "./sections/footer-cta";
+import { MarketingSiteNav } from "./site-nav";
 
+/** Research-led interactive experience: AI cognitive offloading first, product second. */
 export function MarketingExperience() {
   return (
-    <div className="mkt-root">
-      <HeroSection />
-      <AttentionProblemSection />
-      <AttentionTestSection />
-      <PhoneEnvironmentSection />
-      <AnchorRevealSection />
+    <div className="mkt-root mkt-root--deck">
+      <MarketingSiteNav />
+      <ResearchHeroSection />
+      <AdoptionStatsSection />
+      <BastaniRctSection />
+      <DeskillingSection />
+      <ResearchThemesSection />
+      <DeckEmbedSection />
+      <SourcesSection />
       <ProductWalkthroughSection />
-      <ManifestoSection />
-      <ResearchTeaserSection />
       <FooterCta />
     </div>
   );

@@ -20,8 +20,8 @@ export function FooterCta() {
           <Link href="/research" className="mkt-btn mkt-btn--ghost">
             Research deck
           </Link>
-          <a href="#experiment" className="mkt-btn mkt-btn--ghost">
-            Attention test
+          <a href="#bastani" className="mkt-btn mkt-btn--ghost">
+            Bastani RCT
           </a>
         </div>
         <p className="mkt-body" style={{ marginTop: "2.5rem", fontSize: "0.75rem" }}>
