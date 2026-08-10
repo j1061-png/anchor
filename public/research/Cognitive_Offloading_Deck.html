@@ -734,6 +734,16 @@ body.modal-open #decktabs{opacity:0; pointer-events:none;}
 </style>
 </head>
 <body>
+<a href="/" id="anchor-exit" title="Back to Anchor">← Anchor</a>
+<style>
+#anchor-exit{
+  position:fixed; top:max(10px,env(safe-area-inset-top)); left:max(10px,env(safe-area-inset-left));
+  z-index:99999; padding:8px 14px; font:600 12px Calibri,Segoe UI,system-ui,sans-serif;
+  color:#cfcbec; text-decoration:none; border-radius:999px;
+  background:rgba(11,10,36,.78); border:1px solid rgba(167,155,255,.4);
+}
+#anchor-exit:hover{background:rgba(42,37,96,.92);color:#fff;}
+</style>
 
 <nav id="decktabs" aria-label="Presentations">
   <a class="on" href="Cognitive_Offloading_Deck.html"><span class="full">Cognitive Offloading</span><span class="short">Offloading</span></a>

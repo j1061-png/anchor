@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack -p 5730",
+    "dev:clean": "rm -rf .next && next dev --turbopack -p 5730",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

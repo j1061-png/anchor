@@ -197,11 +197,16 @@
 }
 
 .mkt-section {
-  opacity: 0;
-  transform: translateY(28px);
+  opacity: 1;
+  transform: none;
   transition:
     opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mkt-section:not(.mkt-section--in) {
+  opacity: 1;
+  transform: none;
 }
 
 .mkt-section--in {

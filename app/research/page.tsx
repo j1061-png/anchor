@@ -1,18 +1,6 @@
-import Link from "next/link";
-import "./research.css";
+import { redirect } from "next/navigation";
 
+/** Full-screen research deck — served as static HTML for the exact interactive experience. */
 export default function ResearchPage() {
-  return (
-    <div className="research-page">
-      <Link href="/" className="research-exit">
-        ← Anchor
-      </Link>
-      <iframe
-        src="/research/Cognitive_Offloading_Deck.html"
-        title="Cognitive Offloading — Your Brain on Autopilot"
-        className="research-frame"
-        allowFullScreen
-      />
-    </div>
-  );
+  redirect("/research/Cognitive_Offloading_Deck.html");
 }
