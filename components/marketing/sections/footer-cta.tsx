@@ -7,7 +7,9 @@ export function FooterCta() {
   return (
     <footer className="mkt-footer-cta">
       <div className="mkt-section__inner">
-        <MarketingLogo size="lg" withTagline inverted />
+        <div className="mkt-logo-panel mkt-logo-panel--center">
+          <MarketingLogo size="lg" />
+        </div>
         <h2 className="mkt-headline" style={{ marginTop: "2rem" }}>
           Five puzzles. Thinking stays yours.
         </h2>

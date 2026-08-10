@@ -1,51 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 300" fill="none" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 560" fill="none" role="img" aria-labelledby="title desc">
   <title id="title">Anchor</title>
   <desc id="desc">Lock distractions. Anchor your focus.</desc>
 
-  <g transform="translate(160 4) scale(1)">
-    <g fill="#0B1F3A">
-      <path d="M100 14c-28 0-50 20.5-50 48v22h22V62c0-14.4 12.1-26 28-26s28 11.6 28 26v22h22V62c0-27.5-22-48-50-48z"/>
-      <rect x="90" y="58" width="20" height="118" rx="4"/>
-      <rect x="52" y="96" width="96" height="16" rx="4"/>
-      <path d="M100 168c-26 0-48-10-64-26l14-14c12 11 28 18 50 18s38-7 50-18l14 14c-16 16-38 26-64 26z"/>
-      <path d="M36 142l-18 8 10 22c18-4 32-14 42-26l-14-14c-6 5-13 9-20 10z"/>
-      <path d="M164 142l18 8-10 22c-18-4-32-14-42-26l14-14c6 5 13 9 20 10z"/>
-      <circle cx="100" cy="178" r="8"/>
-    </g>
-    <rect x="62" y="78" width="76" height="88" rx="14" fill="url(#lockGrad)"/>
-    <circle cx="100" cy="112" r="14" fill="#0B1F3A"/>
-    <path fill="#0B1F3A" d="M93 118h14l-3 28h-8l-3-28z"/>
+  <!-- Icon -->
+  <g transform="translate(160 24)">
+    <path
+      fill="#0B1F3A"
+      d="M80 12c-19.33 0-35 14.67-35 35v14h12V47c0-12.67 10.33-23 23-23s23 10.33 23 23v14h12V47c0-20.33-15.67-35-35-35zm-6 46h12v38c10.67-3.33 18.67-11 22-21.33l-10.67-3.33C94.67 78.67 88.67 84 80 86.67V58zm0 0V86.67C71.33 84 65.33 78.67 62 71.33L51.33 74.67C54.67 85 62.67 92.67 74 96V58h6zm-28 78.67 10.67-10.67c6.67 5.33 15.33 8.67 24 9.33V152h6v-17.33c8.67-.67 17.33-4 24-9.33l10.67 10.67C109.33 145.33 95.33 152 80 152c-15.33 0-29.33-6.67-34-15.33z"
+    />
+    <rect x="52" y="64" width="56" height="64" rx="11" fill="url(#lockBodyFull)" />
+    <circle cx="80" cy="88" r="10" fill="#0B1F3A" />
+    <path fill="#0B1F3A" d="M74 94h12l-2.5 18h-7L74 94z" />
   </g>
 
+  <!-- Wordmark -->
   <text
-    x="260"
-    y="230"
+    x="240"
+    y="340"
     text-anchor="middle"
     fill="#0B1F3A"
-    font-family="Bricolage Grotesque, Public Sans, Arial Black, sans-serif"
-    font-size="64"
+    font-family="'Bricolage Grotesque', 'Arial Black', 'Helvetica Neue', sans-serif"
+    font-size="72"
     font-weight="800"
-    letter-spacing="-1.5"
+    letter-spacing="-2"
   >Anchor</text>
 
+  <!-- Tagline -->
   <text
-    x="260"
-    y="268"
+    x="240"
+    y="392"
     text-anchor="middle"
-    font-family="Public Sans, Arial, sans-serif"
-    font-size="14"
+    font-family="'Public Sans', 'Helvetica Neue', Arial, sans-serif"
+    font-size="15"
     font-weight="700"
-    letter-spacing="2.4"
+    letter-spacing="3.2"
   >
     <tspan fill="#3D4A5C">LOCK DISTRACTIONS. </tspan>
     <tspan fill="#3B6FE0">ANCHOR YOUR FOCUS.</tspan>
   </text>
 
   <defs>
-    <linearGradient id="lockGrad" x1="100" y1="78" x2="100" y2="166" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#9BB8F6"/>
-      <stop offset="0.45" stop-color="#5B8AE8"/>
-      <stop offset="1" stop-color="#2F62D4"/>
+    <linearGradient id="lockBodyFull" x1="80" y1="64" x2="80" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9BBEF7" />
+      <stop offset="0.5" stop-color="#5B8FE8" />
+      <stop offset="1" stop-color="#356FD4" />
     </linearGradient>
   </defs>
 </svg>

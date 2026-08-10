@@ -49,17 +49,32 @@
 .mkt-nav__brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.55rem;
-  font-family: var(--font-display), sans-serif;
-  font-weight: 800;
-  font-size: 1rem;
-  letter-spacing: -0.02em;
-  color: var(--mkt-ink);
 }
 
-.mkt-nav__mark {
-  width: 1.35rem;
-  height: auto;
+.mkt-logo-panel {
+  display: inline-block;
+  padding: 0.85rem 1.1rem 0.65rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0.85rem;
+  background: #fff;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.25);
+}
+
+.mkt-logo-panel--center {
+  margin-inline: auto;
+  margin-bottom: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .mkt-nav__cta {

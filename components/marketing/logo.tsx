@@ -2,66 +2,57 @@ import Image from "next/image";
 
 type LogoProps = {
   className?: string;
-  withTagline?: boolean;
+  /** Full lockup with tagline, or mark only */
+  variant?: "full" | "mark";
   size?: "sm" | "md" | "lg" | "hero";
-  /** Light text for dark backgrounds */
-  inverted?: boolean;
 };
 
-const MARK: Record<NonNullable<LogoProps["size"]>, number> = {
-  sm: 28,
-  md: 40,
-  lg: 72,
-  hero: 112,
+const FULL: Record<NonNullable<LogoProps["size"]>, number> = {
+  sm: 140,
+  md: 180,
+  lg: 240,
+  hero: 300,
 };
 
+const MARK = 36;
+
+/** Original Anchor brand lockup (PNG). Mark falls back to SVG crop. */
 export function MarketingLogo({
   className = "",
-  withTagline = false,
+  variant = "full",
   size = "md",
-  inverted = false,
 }: LogoProps) {
-  const mark = MARK[size];
-  const stacked = size === "lg" || size === "hero";
-  const titleClass =
-    size === "hero"
-      ? "text-5xl sm:text-6xl"
-      : size === "lg"
-        ? "text-3xl"
-        : size === "sm"
-          ? "text-lg"
-          : "text-xl";
-  const titleColor = inverted ? "text-[var(--mkt-ink)]" : "text-[#0B1F3A]";
-
-  return (
-    <div
-      className={`inline-flex ${stacked ? "flex-col items-center" : "items-center gap-2"} ${className}`}
-    >
-      <div
-        className={`inline-flex ${stacked ? "flex-col items-center gap-3" : "items-center gap-2"}`}
+  if (variant === "mark") {
+    return (
+      <span
+        className={`inline-block overflow-hidden ${className}`}
+        style={{ width: MARK, height: MARK }}
+        aria-hidden
       >
         <Image
-          src="/brand/anchor-mark.svg"
+          src="/brand/anchor-logo.png"
           alt=""
-          width={mark}
-          height={Math.round(mark * 1.2)}
-          priority={size === "hero"}
+          width={MARK * 2.8}
+          height={MARK * 3.3}
           className="select-none"
+          style={{ objectFit: "cover", objectPosition: "top center", marginTop: -2 }}
+          priority
         />
-        <span
-          className={`font-display font-extrabold tracking-tight ${titleColor} ${titleClass}`}
-        >
-          Anchor
-        </span>
-      </div>
-      {withTagline ? (
-        <p className="mt-3 text-center text-[0.68rem] font-bold uppercase tracking-[0.22em] sm:text-xs">
-          <span className={inverted ? "text-[var(--mkt-ink-soft)]" : "text-[#3D4A5C]"}>
-            Lock distractions.{" "}
-          </span>
-          <span className="text-[#6B9BF0]">Anchor your focus.</span>
-        </p>
-      ) : null}
-    </div>
+      </span>
+    );
+  }
+
+  const width = FULL[size];
+  const height = Math.round(width * (560 / 480));
+
+  return (
+    <Image
+      src="/brand/anchor-logo.png"
+      alt="Anchor. Lock distractions. Anchor your focus."
+      width={width}
+      height={height}
+      priority={size === "hero"}
+      className={`select-none ${className}`}
+    />
   );
 }

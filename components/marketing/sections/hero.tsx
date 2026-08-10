@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { MarketingLogo } from "../logo";
 import { Eyebrow, Headline, Lead, PhoneFrame } from "../ui";
 import { usePrefersReducedMotion } from "../hooks";
 
@@ -62,6 +62,9 @@ export function HeroSection() {
     <header className="mkt-hero">
       <div className="mkt-section__inner mkt-hero__grid">
         <div>
+          <div className="mkt-logo-panel">
+            <MarketingLogo size="md" />
+          </div>
           <Eyebrow>Attention &amp; cognitive offloading</Eyebrow>
           <Headline as="h1" className="mkt-headline--wide">
             How much of your attention belongs to you?
@@ -147,15 +150,8 @@ export function HeroSection() {
 
       <nav className="mkt-nav" aria-label="Site">
         <Link href="/" className="mkt-nav__brand">
-          <Image
-            src="/brand/anchor-mark.svg"
-            alt=""
-            width={22}
-            height={26}
-            className="mkt-nav__mark"
-            priority
-          />
-          Anchor
+          <MarketingLogo variant="mark" size="sm" />
+          <span className="sr-only">Anchor</span>
         </Link>
         <Link href="/auth?mode=signup" className="mkt-nav__cta">
           Start training
