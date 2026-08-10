@@ -40,6 +40,13 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  if (user && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/today";
+    return NextResponse.redirect(url);
+  }
+
   const guarded = GUARDED.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
