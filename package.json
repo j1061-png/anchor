@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 5730",
-    "dev:clean": "rm -rf .next && next dev -p 5730",
+    "dev:clean": "fuser -k 5730/tcp 2>/dev/null || true; rm -rf .next && next dev -p 5730",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
