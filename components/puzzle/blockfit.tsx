@@ -45,8 +45,6 @@ interface KeyboardCarry {
 }
 
 interface GridCellProps {
-  r: number;
-  c: number;
   color: number | undefined;
   inGhost: boolean;
   ghostValid: boolean;
@@ -476,8 +474,6 @@ export function BlockFitPuzzle({ puzzle, onSolve, onGrade }: PuzzleProps) {
           return (
             <GridCell
               key={k}
-              r={r}
-              c={c}
               color={occupied.get(k)}
               inGhost={ghost?.cells.has(k) ?? false}
               ghostValid={ghost?.valid ?? false}
