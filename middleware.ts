@@ -1,7 +1,22 @@
 import { NextResponse, type NextRequest } from "next/server.js";
 import { createServerClient } from "@supabase/ssr";
 
-const GUARDED = ["/today", "/dashboard", "/leaderboard", "/profile", "/session", "/practice", "/onboarding"];
+const GUARDED = [
+  "/today",
+  "/learn",
+  "/review",
+  "/independence",
+  "/journal",
+  "/brain-only",
+  "/about-the-evidence",
+  "/iphone",
+  "/dashboard",
+  "/leaderboard",
+  "/profile",
+  "/session",
+  "/practice",
+  "/onboarding",
+];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#e4e7dc",
+  themeColor: "#f4f2ec",
   width: "device-width",
   initialScale: 1,
   // The native shell draws edge to edge; safe-area padding lives in CSS.
