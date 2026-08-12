@@ -201,11 +201,12 @@ export default async function LeaderboardPage({
         : "Friends";
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="page-header">
-        <span className="principle-tag">Progress ranks</span>
-        <h1 className="page-title">{heading}</h1>
-        <p className="page-subtitle">
+    <div className="flex flex-col gap-4">
+      <header>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">
+          {heading}
+        </h1>
+        <p className="mt-1 text-sm text-slate">
           {tab === "improved"
             ? "How much you moved this week, against people at your level."
             : tab === "independence"

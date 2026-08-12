@@ -4,8 +4,6 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { SetupRequired } from "@/components/setup-required";
 import { Nav } from "@/components/nav";
 
-// Needs request-time env + auth; static prerender calls createClient() in child
-// pages and crashes when Vercel env vars are missing.
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({
@@ -37,7 +35,8 @@ export default async function AppLayout({
         avatarEmoji={profile.avatar_emoji}
         streak={profile.streak_current}
       />
-      <main className="mx-auto w-full max-w-3xl px-4 pb-32 pt-2 sm:px-6 sm:pt-4">
+      {/* Wider layout; sidebar offset on desktop; bottom nav clearance on mobile */}
+      <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-4 sm:px-6 sm:pt-8 lg:ml-64 lg:px-8">
         {children}
       </main>
     </div>

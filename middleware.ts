@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server.js";
 import { createServerClient } from "@supabase/ssr";
+import { getSupabasePublicConfig } from "@/lib/env";
 
 const GUARDED = [
   "/today",
@@ -21,15 +22,14 @@ const GUARDED = [
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) {
+  const config = getSupabasePublicConfig();
+  if (!config) {
     return response;
   }
 
   const supabase = createServerClient(
-    supabaseUrl,
-    supabaseAnonKey,
+    config.url,
+    config.anonKey,
     {
       cookies: {
         getAll() {

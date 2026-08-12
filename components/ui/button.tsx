@@ -4,8 +4,8 @@ type Variant = "primary" | "secondary" | "quiet" | "danger";
 
 const styles: Record<Variant, string> = {
   primary:
-    "rounded-(--radius-pill) bg-navy text-chalk font-semibold px-6 py-3 border border-navy " +
-    "shadow-sm hover:bg-navy/90 hover:shadow-md active:scale-[0.98] " +
+    "rounded-(--radius-pill) bg-accent text-chalk font-semibold px-6 py-3 border border-accent " +
+    "shadow-sm hover:bg-accent/90 hover:shadow-md active:scale-[0.98] " +
     "disabled:opacity-40 disabled:pointer-events-none transition-all duration-200",
   secondary:
     "rounded-(--radius-ctl) bg-chalk text-ink font-semibold px-4 py-2.5 border border-ink/10 " +

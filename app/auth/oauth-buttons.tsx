@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isAppleAuthEnabled } from "@/lib/env";
 
 // Google and Apple sign-in. Both buttons follow the providers' brand rules
 // exactly and are exempt from the app palette. Apple also satisfies App Store
@@ -10,7 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 export function OAuthButtons({ next }: { next: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"google" | "apple" | null>(null);
-  const appleEnabled = process.env.NEXT_PUBLIC_APPLE_AUTH_ENABLED === "true";
+  const appleEnabled = isAppleAuthEnabled();
 
   async function signInWith(provider: "google" | "apple") {
     setError(null);

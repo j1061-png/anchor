@@ -21,8 +21,8 @@ export default function ErrorBoundary({
   if (isSetupError(error)) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center px-6 py-12 text-center">
-        <div className="hero-card w-full p-8">
-          <h1 className="font-display text-xl font-extrabold text-navy">
+        <div className="plane w-full p-8">
+          <h1 className="font-display text-xl font-extrabold text-ink">
             Anchor isn&apos;t configured yet
           </h1>
           <p className="mt-2 text-sm leading-relaxed text-slate">

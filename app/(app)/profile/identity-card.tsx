@@ -5,8 +5,15 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarPicker } from "@/components/ui/avatar";
 import type { ProfileRow } from "@/lib/database.types";
+
+// Same 24 faces as onboarding, so a re-pick feels familiar.
+const AVATARS = [
+  "🦊", "🐸", "🦉", "🐙", "🦖", "🐝",
+  "🐢", "🦈", "🐇", "🦫", "🐊", "🦩",
+  "🐞", "🐐", "🦭", "🐌", "🦅", "🐺",
+  "🦋", "🐧", "🐘", "🦔", "🐆", "🐋",
+];
 
 const YEAR_GROUPS = [
   "Year 9",
@@ -124,7 +131,12 @@ export function IdentityCard(props: IdentityCardProps) {
     <section className="plane p-5" aria-label="Identity">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-        <Avatar avatarId={current.avatarEmoji} name={current.displayName} size="lg" />
+          <span
+            aria-hidden
+            className="flex size-14 shrink-0 items-center justify-center rounded-(--radius-ctl) border border-slate/40 bg-paper text-3xl"
+          >
+            {current.avatarEmoji ?? current.displayName.slice(0, 1)}
+          </span>
           <div>
             <h2 className="font-display text-2xl font-extrabold tracking-tight">
               {current.displayName}
@@ -166,10 +178,29 @@ export function IdentityCard(props: IdentityCardProps) {
             />
           </label>
 
-          <AvatarPicker
-            value={emoji}
-            onChange={setEmoji}
-          />
+          <fieldset>
+            <legend className="text-sm font-semibold">
+              Face <span className="font-normal text-slate">(optional)</span>
+            </legend>
+            <div className="mt-2 grid grid-cols-6 gap-1.5">
+              {AVATARS.map((face) => (
+                <button
+                  key={face}
+                  type="button"
+                  aria-pressed={emoji === face}
+                  aria-label={`avatar ${face}`}
+                  onClick={() => setEmoji(emoji === face ? null : face)}
+                  className={`flex size-11 cursor-pointer items-center justify-center rounded-(--radius-ctl) text-xl ${
+                    emoji === face
+                      ? "border-2 border-ink bg-gold/40"
+                      : "border border-slate/40 bg-chalk hover:border-ink"
+                  }`}
+                >
+                  {face}
+                </button>
+              ))}
+            </div>
+          </fieldset>
 
           <label className="grid gap-1.5 text-sm font-semibold">
             School

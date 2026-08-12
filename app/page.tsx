@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/env";
 import { SetupRequired } from "@/components/setup-required";
 import { Wordmark } from "@/components/wordmark";
+import { BlockMeter } from "@/components/ui/think-timer";
 
 export const dynamic = "force-dynamic";
 
@@ -18,65 +19,82 @@ export default async function LandingPage() {
   } = await supabase.auth.getUser();
   if (user) redirect("/today");
 
-  const cards = [
-    { title: "Attempt before AI", body: "Hints ask questions before answers. The answer never comes first.", color: "#3B82F6" },
-    { title: "Grade the process", body: "XP rewards independent solving — not just showing up.", color: "#D69E2E" },
-    { title: "Track independence", body: "Six dimensions show where you're offloading vs. doing the work.", color: "#38A169" },
-    { title: "Progress ranks", body: "See how you improve against classmates at your level.", color: "#805AD5" },
-  ];
-
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col px-5 py-8 sm:max-w-xl">
+    <main className="mx-auto flex min-h-dvh max-w-6xl flex-col px-6 py-8 sm:px-8">
       <header className="flex items-center justify-between">
         <Wordmark />
-        <Link href="/auth" className="text-sm font-semibold text-slate hover:text-navy">Sign in</Link>
+        <Link
+          href="/auth"
+          className="rounded-(--radius-ctl) px-4 py-2.5 text-sm font-semibold text-slate transition-colors hover:bg-mist/60 hover:text-ink"
+        >
+          Sign in
+        </Link>
       </header>
 
-      <section className="flex flex-1 flex-col justify-center py-10">
-        <div className="hero-card p-8 text-center deal-in">
-          <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-navy text-white">
-            <svg viewBox="0 0 24 24" className="size-7" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.75">
-              <rect x="4" y="4" width="7" height="7" rx="1.5" />
-              <rect x="13" y="4" width="7" height="7" rx="1.5" />
-              <rect x="4" y="13" width="7" height="7" rx="1.5" />
-              <rect x="13" y="13" width="7" height="7" rx="1.5" />
-            </svg>
-          </span>
-          <p className="mt-5 text-xs text-slate">Welcome to anchor</p>
-          <h1 className="mt-2 font-display text-3xl font-extrabold leading-tight tracking-tight text-navy sm:text-4xl">
-            Say hello before you dive in
-          </h1>
-          <p className="mx-auto mt-4 max-w-sm text-sm leading-relaxed text-slate">
-            Five puzzles a day. No help for 45 seconds. Built on cognitive-offloading
-            research — the thinking stays in your head.
-          </p>
+      <section className="flex flex-1 flex-col justify-center py-16 lg:py-24">
+        <span className="principle-tag w-fit deal-in">Cognitive offloading research</span>
+        <h1 className="page-title mt-4 max-w-3xl deal-in stagger-1">
+          Five puzzles.
+          <br />
+          <span className="text-accent">No help for 45 seconds.</span>
+        </h1>
+        <p className="page-subtitle mt-6 deal-in stagger-2">
+          AI makes work look better and learners worse — unless the thinking stays
+          human. Anchor is built on that research: attempt first, fade help, track
+          what you do without assistance.
+        </p>
 
+        <div className="mt-10 flex flex-wrap items-center gap-6 deal-in stagger-3">
           <Link
             href="/auth?mode=signup"
-            className="mt-8 inline-flex w-full items-center justify-center rounded-(--radius-pill) bg-navy px-6 py-3.5 text-sm font-semibold text-white shadow-md hover:bg-navy/90"
+            className="inline-flex items-center rounded-(--radius-pill) bg-accent px-8 py-4 text-base font-semibold text-chalk shadow-md transition-all hover:bg-accent/90 hover:shadow-lg"
           >
             Start training
           </Link>
+          <div className="flex items-center gap-3 text-sm text-slate">
+            <BlockMeter filled={11} label="timer, 11 of 16 blocks filled" />
+            <span>think first, then help fades in</span>
+          </div>
         </div>
 
-        <p className="my-6 text-center text-xs text-slate">or start with</p>
-
-        <ul className="grid grid-cols-2 gap-3">
-          {cards.map((c) => (
-            <li key={c.title} className="flex flex-col items-center gap-2 rounded-2xl border border-ink/6 bg-chalk p-4 shadow-sm">
-              <span className="flex size-10 items-center justify-center rounded-xl text-white" style={{ background: c.color }}>
-                <svg viewBox="0 0 24 24" className="size-5" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.75">
-                  <path d="M12 3v18M3 12h18" strokeLinecap="round" />
-                </svg>
-              </span>
-              <p className="text-center text-xs font-semibold text-navy">{c.title}</p>
+        <ul className="mt-20 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              title: "Attempt before AI",
+              body: "Hints ask questions before answers. The answer never comes first.",
+            },
+            {
+              title: "Grade the process",
+              body: "XP rewards independent solving and persistence — not just showing up.",
+            },
+            {
+              title: "Track independence",
+              body: "Six dimensions show where you're offloading vs. doing the work yourself.",
+            },
+            {
+              title: "Brain-only practice",
+              body: "Scheduled unaided sessions build the skills AI would skip.",
+            },
+          ].map((item, i) => (
+            <li
+              key={item.title}
+              className={`plane-interactive p-5 deal-in stagger-${Math.min(i + 1, 4)}`}
+            >
+              <p className="font-display text-sm font-extrabold">{item.title}</p>
+              <p className="mt-2 text-sm text-slate">{item.body}</p>
             </li>
           ))}
         </ul>
       </section>
 
-      <footer className="pb-4 text-center text-xs text-slate">
-        Built for students who want their working memory back.
+      <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-ink/8 pb-4 pt-6 text-xs text-slate">
+        <span>Built for students who want their working memory back.</span>
+        <Link
+          href="/about-the-evidence"
+          className="font-semibold text-accent hover:underline"
+        >
+          Read the research
+        </Link>
       </footer>
     </main>
   );
