@@ -55,6 +55,13 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
+
+  if (user && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/today";
+    return NextResponse.redirect(url);
+  }
+
   const guarded = GUARDED.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
@@ -73,6 +80,6 @@ export default middleware;
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/share|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/share|research/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|html)$).*)",
   ],
 };

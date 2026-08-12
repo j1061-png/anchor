@@ -3,6 +3,30 @@
 Daily cognitive training that fights cognitive offloading. Five puzzles a day,
 no help for the first 45 seconds.
 
+## Quick start — marketing site only (local)
+
+No Supabase or API keys needed to view the research deck and marketing pages.
+
+```bash
+git clone https://github.com/j1061-png/anchor.git
+cd anchor
+git checkout cursor/marketing-site-fbe4   # marketing branch (PR #1)
+npm install
+cp .env.example .env.local                # empty values are fine for marketing
+npm run dev:clean
+```
+
+Open **http://localhost:5730/** — interactive research deck embedded on the homepage.  
+Full deck only: **http://localhost:5730/research**
+
+If you see a blank page or 500 error, stop any old server and run `npm run dev:clean` again (clears a corrupted `.next` cache).
+
+Production preview locally:
+
+```bash
+npm run build && npm run start -- -p 5730
+```
+
 Stack: Next.js 15 (App Router, TS strict), Tailwind v4, Supabase (Postgres +
 Auth + RLS), Anthropic API (`claude-sonnet-4-6`, server routes only),
 Recharts, Zod. Deploys to Vercel.
