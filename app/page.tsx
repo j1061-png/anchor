@@ -21,8 +21,8 @@ export default async function LandingPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-6xl flex-col px-6 py-8 sm:px-8">
-      <header className="flex items-center justify-between">
-        <Wordmark />
+      <header className="flex items-center justify-between gap-4">
+        <Wordmark variant="full" />
         <Link
           href="/auth"
           className="rounded-(--radius-ctl) px-4 py-2.5 text-sm font-semibold text-slate transition-colors hover:bg-mist/60 hover:text-ink"

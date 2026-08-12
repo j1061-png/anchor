@@ -39,21 +39,35 @@ function fmtDate(iso: string): string {
   });
 }
 
+const ACCENT = "#2563eb";
+
 function OgWordmark() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-        <div style={{ display: "flex", gap: 7 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 4, backgroundColor: INK }} />
-          <div style={{ width: 30, height: 30, borderRadius: 4, backgroundColor: FLAG }} />
+    <div style={{ display: "flex", alignItems: "center", gap: 28 }}>
+      <svg width="72" height="90" viewBox="0 0 64 80" fill="none">
+        <defs>
+          <linearGradient id="ogLock" x1="32" y1="18" x2="32" y2="44" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#BFDBFE" />
+            <stop offset="1" stopColor="#6366F1" />
+          </linearGradient>
+        </defs>
+        <path d="M22 18V14a10 10 0 0 1 20 0v4" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+        <rect x="18" y="18" width="28" height="26" rx="6" fill="url(#ogLock)" />
+        <circle cx="32" cy="29" r="3.5" fill={INK} />
+        <path d="M32 32.5v6" stroke={INK} strokeWidth="3" strokeLinecap="round" />
+        <path d="M32 44v18" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+        <path d="M18 58c4 4 8 6 14 6s10-2 14-6" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+        <path d="M20 50h24" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+        <path d="M18 62l6-8M46 62l-6-8" stroke={INK} strokeWidth="4" strokeLinecap="round" />
+      </svg>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ fontSize: 64, fontWeight: 800, color: INK, letterSpacing: -2 }}>
+          Anchor
         </div>
-        <div style={{ display: "flex", gap: 7 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 4, backgroundColor: INK }} />
-          <div style={{ width: 30, height: 30, borderRadius: 4, backgroundColor: INK }} />
+        <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase" }}>
+          <span style={{ color: INK }}>Lock distractions. </span>
+          <span style={{ color: ACCENT }}>Anchor your focus.</span>
         </div>
-      </div>
-      <div style={{ fontSize: 64, fontWeight: 700, color: INK, letterSpacing: -2 }}>
-        anchor
       </div>
     </div>
   );

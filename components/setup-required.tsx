@@ -5,7 +5,7 @@ import { Wordmark } from "@/components/wordmark";
 export function SetupRequired() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col items-center justify-center px-6 py-12 text-center">
-      <Wordmark />
+      <Wordmark variant="full" />
       <div className="plane mt-8 w-full p-8">
         <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-flag/10 text-flag">
           <svg viewBox="0 0 24 24" className="size-6" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.75">
