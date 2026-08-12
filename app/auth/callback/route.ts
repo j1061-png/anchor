@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/env";
+
+export const dynamic = "force-dynamic";
 
 // OAuth and email-link landing point. Exchanges the code for a session, then
 // routes: password recovery → /auth/reset, first sign-in (no display name yet)
@@ -12,6 +15,10 @@ export async function GET(request: Request) {
 
   if (!code) {
     return NextResponse.redirect(`${origin}/auth?error=callback`);
+  }
+
+  if (!isSupabaseConfigured()) {
+    return NextResponse.redirect(`${origin}/?setup=required`);
   }
 
   const supabase = await createClient();

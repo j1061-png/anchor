@@ -5,6 +5,8 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { SetupRequired } from "@/components/setup-required";
 import { Wordmark } from "@/components/wordmark";
 
+export const dynamic = "force-dynamic";
+
 export default async function LandingPage() {
   if (!isSupabaseConfigured()) {
     return <SetupRequired />;

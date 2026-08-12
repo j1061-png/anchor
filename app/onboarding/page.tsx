@@ -8,6 +8,8 @@ import { OnboardingWizard } from "./onboarding-wizard";
 
 export const metadata: Metadata = { title: "Set up" };
 
+export const dynamic = "force-dynamic";
+
 export default async function OnboardingPage() {
   if (!isSupabaseConfigured()) {
     return <SetupRequired />;

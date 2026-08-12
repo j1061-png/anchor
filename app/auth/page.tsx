@@ -9,6 +9,8 @@ import { AuthForm } from "./auth-form";
 
 export const metadata: Metadata = { title: "Sign in" };
 
+export const dynamic = "force-dynamic";
+
 const ERROR_MESSAGES: Record<string, string> = {
   callback: "Sign-in didn't finish. Try again.",
   reset_expired: "That reset link has expired. Request a new one from the sign-in form.",

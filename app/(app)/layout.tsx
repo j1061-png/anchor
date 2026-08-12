@@ -4,6 +4,10 @@ import { isSupabaseConfigured } from "@/lib/env";
 import { SetupRequired } from "@/components/setup-required";
 import { Nav } from "@/components/nav";
 
+// Needs request-time env + auth; static prerender calls createClient() in child
+// pages and crashes when Vercel env vars are missing.
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
