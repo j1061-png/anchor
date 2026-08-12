@@ -17,7 +17,9 @@ export function OAuthButtons({ next }: { next: string }) {
     setError(null);
     setBusy(provider);
     const supabase = createClient();
-    const site = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+    // Always use the URL the user is actually on — NEXT_PUBLIC_SITE_URL may
+    // point at production (zeta) while testing on a preview domain.
+    const site = window.location.origin;
     const target =
       next && next.startsWith("/") && !next.startsWith("//")
         ? `?next=${encodeURIComponent(next)}`
