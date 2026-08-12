@@ -10,7 +10,7 @@ import type { ProfileRow } from "@/lib/database.types";
 
 const bodySchema = z.object({
   display_name: z.string().trim().min(1).max(32),
-  avatar_emoji: z.string().min(1).max(8).nullable(),
+  avatar_emoji: z.string().min(1).max(32).nullable(),
   school: z.string().trim().min(1).max(120).nullable(),
   year_group: z.enum([
     "Year 9",

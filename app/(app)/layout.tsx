@@ -1,10 +1,16 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/env";
+import { SetupRequired } from "@/components/setup-required";
 import { Nav } from "@/components/nav";
 
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  if (!isSupabaseConfigured()) {
+    return <SetupRequired />;
+  }
+
   const supabase = await createClient();
 
   const {

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/env";
+import { SetupRequired } from "@/components/setup-required";
 import { Wordmark } from "@/components/wordmark";
 import { AuthForm } from "./auth-form";
 
@@ -21,6 +23,10 @@ export default async function AuthPage({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  if (!isSupabaseConfigured()) {
+    return <SetupRequired />;
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

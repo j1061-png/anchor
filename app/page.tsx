@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/env";
+import { SetupRequired } from "@/components/setup-required";
 import { Wordmark } from "@/components/wordmark";
 
 export default async function LandingPage() {
+  if (!isSupabaseConfigured()) {
+    return <SetupRequired />;
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

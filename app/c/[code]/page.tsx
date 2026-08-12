@@ -6,6 +6,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseConfigured } from "@/lib/env";
+import { SetupRequired } from "@/components/setup-required";
 import { CATEGORY_LABELS } from "@/lib/types";
 import { Wordmark } from "@/components/wordmark";
 import { PlayChallengeButton } from "./play-button";
@@ -53,6 +55,10 @@ export default async function ChallengePage({
   const { code: rawCode } = await params;
   const code = rawCode.toUpperCase();
   if (!/^[A-Z2-9]{4,12}$/.test(code)) notFound();
+
+  if (!isSupabaseConfigured()) {
+    return <SetupRequired />;
+  }
 
   const admin = createAdminClient();
   const { data: challenge } = await admin
