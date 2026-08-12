@@ -116,20 +116,26 @@ you run on), your production URL in prod.
 
 ## 7. Deploy to Vercel
 
-1. Push the repo to GitHub and import it in Vercel (framework auto-detected).
-2. Add env vars (Production + Preview):
+If the project is not in your Vercel dashboard yet:
+
+1. Go to [vercel.com/new](https://vercel.com/new) → **Import** `j1061-png/anchor`
+2. Framework: **Next.js** (auto-detected). Production branch: **`main`**
+3. Add env vars (Production + Preview) — copy values from `.env.production` plus secrets:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `ANTHROPIC_API_KEY`
-   - `NEXT_PUBLIC_SITE_URL` = `https://<your-domain>`
+   - `NEXT_PUBLIC_SITE_URL` = `https://<your-vercel-domain>`
    - `NEXT_PUBLIC_APPLE_AUTH_ENABLED` = `false` until §4 is done
-3. Deploy:
+4. Click **Deploy**. Future pushes to `main` auto-deploy.
+
+**Optional — GitHub Actions deploy:** add repo secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` (from Vercel project Settings → General). The workflow in `.github/workflows/vercel-production.yml` deploys on every push to `main`.
+
+**CLI deploy** (if the project already exists locally linked):
 
 ```bash
 npx vercel --prod
 ```
 
-4. Add the production callback URL to Supabase Auth URL configuration (§1.3).
-   The Google OAuth redirect URI stays the same — it points at Supabase, not
-   your domain.
+Add the production callback URL to Supabase Auth URL configuration (§1.3).
+The Google OAuth redirect URI stays the same — it points at Supabase, not your domain.

@@ -27,8 +27,7 @@ export default async function AppLayout({
         avatarEmoji={profile.avatar_emoji}
         streak={profile.streak_current}
       />
-      {/* Wider layout; sidebar offset on desktop; bottom nav clearance on mobile */}
-      <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-4 sm:px-6 sm:pt-8 lg:ml-64 lg:px-8">
+      <main className="mx-auto w-full max-w-3xl px-4 pb-32 pt-2 sm:px-6 sm:pt-4">
         {children}
       </main>
     </div>

@@ -5,17 +5,11 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar } from "@/components/ui/avatar";
 import type { FriendRow } from "@/app/api/friends/route";
 
 function Face({ emoji, name }: { emoji: string | null; name: string }) {
-  return (
-    <span
-      aria-hidden
-      className="flex size-9 shrink-0 items-center justify-center rounded-(--radius-ctl) border border-slate/40 bg-paper text-lg"
-    >
-      {emoji ?? name.slice(0, 1)}
-    </span>
-  );
+  return <Avatar avatarId={emoji} name={name} size="sm" />;
 }
 
 export function FriendsCard() {

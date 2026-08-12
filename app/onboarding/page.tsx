@@ -6,8 +6,6 @@ import { OnboardingWizard } from "./onboarding-wizard";
 
 export const metadata: Metadata = { title: "Set up" };
 
-// Shown once, right after first sign-up. The DB trigger already created the
-// profile row; finishing this wizard fills it in and seeds ratings.
 export default async function OnboardingPage() {
   const supabase = await createClient();
   const {
@@ -21,15 +19,14 @@ export default async function OnboardingPage() {
     .eq("id", user.id)
     .maybeSingle<{ display_name: string | null }>();
 
-  // Already set up: onboarding is a one-time screen.
   if (profile?.display_name) redirect("/today");
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-sm flex-col px-5 py-6">
+    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col px-5 py-8">
       <header>
         <Wordmark />
       </header>
-      <div className="flex flex-1 flex-col justify-center py-10">
+      <div className="flex flex-1 flex-col justify-center py-8">
         <OnboardingWizard />
       </div>
     </main>

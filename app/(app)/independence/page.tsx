@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { XpTimeline, ProgressShare } from "@/components/progress/xp-timeline";
+import { LeaderboardPreview } from "@/components/progress/leaderboard-preview";
 import {
   MIN_SAMPLE,
   assistedUnaidedGap,
@@ -189,6 +190,8 @@ export default async function IndependencePage({
       </header>
 
       <XpTimeline className="deal-in" />
+
+      <LeaderboardPreview />
 
       {profileRow && (
         <ProgressShare
