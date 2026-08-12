@@ -12,61 +12,81 @@ export default async function LandingPage() {
   if (user) redirect("/today");
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col px-5 py-6">
+    <main className="mx-auto flex min-h-dvh max-w-6xl flex-col px-6 py-8 sm:px-8">
       <header className="flex items-center justify-between">
         <Wordmark />
         <Link
           href="/auth"
-          className="rounded-(--radius-ctl) px-3 py-2 text-sm font-semibold underline decoration-slate underline-offset-4 hover:decoration-ink"
+          className="rounded-(--radius-ctl) px-4 py-2.5 text-sm font-semibold text-slate transition-colors hover:bg-mist/60 hover:text-ink"
         >
           Sign in
         </Link>
       </header>
 
-      <section className="flex flex-1 flex-col justify-center py-16">
-        <h1 className="font-display text-5xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">
+      <section className="flex flex-1 flex-col justify-center py-16 lg:py-24">
+        <span className="principle-tag w-fit deal-in">Cognitive offloading research</span>
+        <h1 className="page-title mt-4 max-w-3xl deal-in stagger-1">
           Five puzzles.
           <br />
-          No help for 45 seconds.
+          <span className="text-accent">No help for 45 seconds.</span>
         </h1>
-        <p className="mt-6 max-w-md text-lg text-slate">
-          You have outsourced enough thinking this week. Anchor gives you a
-          short daily session you solve yourself, then shows you exactly where
-          you cracked.
+        <p className="page-subtitle mt-6 deal-in stagger-2">
+          AI makes work look better and learners worse — unless the thinking stays
+          human. Anchor is built on that research: attempt first, fade help, track
+          what you do without assistance.
         </p>
 
-        <div className="mt-10 flex items-center gap-4">
+        <div className="mt-10 flex flex-wrap items-center gap-6 deal-in stagger-3">
           <Link
             href="/auth?mode=signup"
-            className="inline-flex items-center rounded-full border border-ink bg-ink px-7 py-3.5 font-semibold text-chalk hover:bg-ink/85"
+            className="inline-flex items-center rounded-(--radius-pill) bg-accent px-8 py-4 text-base font-semibold text-chalk shadow-md transition-all hover:bg-accent/90 hover:shadow-lg"
           >
             Start training
           </Link>
-          <div className="flex items-center gap-2 text-sm text-slate">
+          <div className="flex items-center gap-3 text-sm text-slate">
             <BlockMeter filled={11} label="timer, 11 of 16 blocks filled" />
-            <span>the timer is watching</span>
+            <span>think first, then help fades in</span>
           </div>
         </div>
 
-        <ul className="mt-16 grid gap-3 text-sm sm:grid-cols-2">
-          <li className="plane-sm px-4 py-3">
-            Hints ask questions before they give answers. The answer never
-            comes first.
-          </li>
-          <li className="plane-sm px-4 py-3">
-            Four puzzle types, difficulty that tracks you puzzle by puzzle.
-          </li>
-          <li className="plane-sm px-4 py-3">
-            A hint-independence score with equal billing to accuracy.
-          </li>
-          <li className="plane-sm px-4 py-3">
-            Streaks, leaderboards, and challenges your classmates will lose.
-          </li>
+        <ul className="mt-20 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              title: "Attempt before AI",
+              body: "Hints ask questions before answers. The answer never comes first.",
+            },
+            {
+              title: "Grade the process",
+              body: "XP rewards independent solving and persistence — not just showing up.",
+            },
+            {
+              title: "Track independence",
+              body: "Six dimensions show where you're offloading vs. doing the work yourself.",
+            },
+            {
+              title: "Brain-only practice",
+              body: "Scheduled unaided sessions build the skills AI would skip.",
+            },
+          ].map((item, i) => (
+            <li
+              key={item.title}
+              className={`plane-interactive p-5 deal-in stagger-${Math.min(i + 1, 4)}`}
+            >
+              <p className="font-display text-sm font-extrabold">{item.title}</p>
+              <p className="mt-2 text-sm text-slate">{item.body}</p>
+            </li>
+          ))}
         </ul>
       </section>
 
-      <footer className="pb-2 text-xs text-slate">
-        Built for people who want their working memory back.
+      <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-ink/8 pb-4 pt-6 text-xs text-slate">
+        <span>Built for students who want their working memory back.</span>
+        <Link
+          href="/about-the-evidence"
+          className="font-semibold text-accent hover:underline"
+        >
+          Read the research
+        </Link>
       </footer>
     </main>
   );

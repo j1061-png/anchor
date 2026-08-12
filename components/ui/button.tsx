@@ -3,19 +3,20 @@ import { forwardRef, type ButtonHTMLAttributes } from "react";
 type Variant = "primary" | "secondary" | "quiet" | "danger";
 
 const styles: Record<Variant, string> = {
-  // Pills are reserved for primary actions (§7 radius rules).
   primary:
-    "rounded-full bg-ink text-chalk font-semibold px-6 py-3 border border-ink " +
-    "hover:bg-ink/85 active:translate-x-px active:translate-y-px disabled:opacity-40 disabled:pointer-events-none",
+    "rounded-(--radius-pill) bg-accent text-chalk font-semibold px-6 py-3 border border-accent " +
+    "shadow-sm hover:bg-accent/90 hover:shadow-md active:scale-[0.98] " +
+    "disabled:opacity-40 disabled:pointer-events-none transition-all duration-200",
   secondary:
-    "rounded-(--radius-ctl) bg-chalk text-ink font-semibold px-4 py-2 border border-ink " +
-    "shadow-(--shadow-plane-sm) hover:bg-paper active:translate-x-px active:translate-y-px active:shadow-none disabled:opacity-40 disabled:pointer-events-none",
+    "rounded-(--radius-ctl) bg-chalk text-ink font-semibold px-4 py-2.5 border border-ink/10 " +
+    "shadow-sm hover:bg-mist/60 hover:border-ink/15 active:scale-[0.98] " +
+    "disabled:opacity-40 disabled:pointer-events-none transition-all duration-200",
   quiet:
-    "rounded-(--radius-ctl) text-ink font-semibold px-3 py-2 underline decoration-slate underline-offset-4 " +
-    "hover:decoration-ink disabled:opacity-40 disabled:pointer-events-none",
+    "rounded-(--radius-ctl) text-ink font-semibold px-3 py-2 " +
+    "hover:bg-mist/60 disabled:opacity-40 disabled:pointer-events-none transition-colors",
   danger:
-    "rounded-(--radius-ctl) bg-chalk text-flag font-semibold px-4 py-2 border border-flag " +
-    "hover:bg-flag/10 disabled:opacity-40 disabled:pointer-events-none",
+    "rounded-(--radius-ctl) bg-chalk text-flag font-semibold px-4 py-2.5 border border-flag/30 " +
+    "hover:bg-flag/5 disabled:opacity-40 disabled:pointer-events-none transition-colors",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -27,7 +28,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <button
         ref={ref}
-        className={`inline-flex items-center justify-center gap-2 text-sm transition-colors cursor-pointer ${styles[variant]} ${className}`}
+        className={`inline-flex items-center justify-center gap-2 text-sm cursor-pointer ${styles[variant]} ${className}`}
         {...props}
       />
     );

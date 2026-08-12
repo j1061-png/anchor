@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BlockMeter } from "@/components/ui/think-timer";
 import { ShareButton } from "@/components/share/share-button";
+import { ChallengeCta } from "@/components/share/challenge-cta";
 import {
   CATEGORY_LABELS,
   PUZZLE_LABELS,
@@ -32,7 +33,7 @@ interface RecapData {
   streak: { current: number; freezes: number; extendedToday: boolean };
   sessionType: "daily" | "practice" | "challenge";
   feedback: string;
-  newAchievements: string[];
+  newAchievements: { key: string; name: string }[];
 }
 
 export function SessionRecap({
@@ -198,29 +199,40 @@ export function SessionRecap({
 
       {data.newAchievements.length > 0 && (
         <section className="plane p-4">
-          <h2 className="text-sm font-semibold">
-            Earned this session
-          </h2>
+          <h2 className="text-sm font-semibold">Earned this session</h2>
           <ul className="mt-2 flex flex-wrap gap-2">
-            {data.newAchievements.map((key) => (
+            {data.newAchievements.map(({ key, name }) => (
               <li key={key} className="plane-sm bg-gold/20 px-3 py-1.5 text-sm">
-                {key.replaceAll("_", " ")}
+                {name}
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <section className="plane p-4">
-        <h2 className="mb-3 text-sm font-semibold">Share the score</h2>
-        <ShareButton
-          title="Anchor"
-          text={`${solved}/${data.perPuzzle.length} on today's five, ${data.perPuzzle.reduce((n, p) => n + p.hintsUsed, 0) === 0 ? "no hints" : "some hints"}.`}
-          url={`${typeof window === "undefined" ? "" : window.location.origin}/auth?mode=signup`}
-          imageUrl={`/api/share/score/${sessionId}`}
-          friendCode={friendCode}
-        />
+      <section className="plane p-5">
+        <span className="principle-tag">Share the process</span>
+        <h2 className="mt-2 font-display text-lg font-extrabold">Share your session</h2>
+        <p className="mt-1 text-sm text-slate">
+          {solved}/{data.perPuzzle.length} solved
+          {data.perPuzzle.every((p) => p.hintsUsed === 0)
+            ? " — all without hints"
+            : " — some with strategic help"}
+        </p>
+        <div className="mt-4">
+          <ShareButton
+            title="Anchor session"
+            text={`${solved}/${data.perPuzzle.length} on today's five. Thinking before AI.`}
+            url={`${typeof window === "undefined" ? "" : window.location.origin}/auth?mode=signup`}
+            imageUrl={`/api/share/score/${sessionId}`}
+            friendCode={friendCode}
+          />
+        </div>
       </section>
+
+      {data.sessionType === "daily" && (
+        <ChallengeCta friendCode={friendCode} />
+      )}
 
       <Link
         href="/today"

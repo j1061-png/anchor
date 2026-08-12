@@ -2,8 +2,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Nav } from "@/components/nav";
 
-// Shell for every signed-in page. Middleware already guards these routes;
-// the user check here is a second line, not the gate.
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -20,7 +18,6 @@ export default async function AppLayout({
     .eq("id", user.id)
     .single();
 
-  // No display name means onboarding never finished.
   if (!profile?.display_name) redirect("/onboarding");
 
   return (
@@ -30,8 +27,8 @@ export default async function AppLayout({
         avatarEmoji={profile.avatar_emoji}
         streak={profile.streak_current}
       />
-      {/* pb-24 clears the fixed bottom tab bar on mobile. */}
-      <main className="mx-auto w-full max-w-2xl px-4 pb-24 pt-4 sm:pt-8">
+      {/* Wider layout; sidebar offset on desktop; bottom nav clearance on mobile */}
+      <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-4 sm:px-6 sm:pt-8 lg:ml-64 lg:px-8">
         {children}
       </main>
     </div>
