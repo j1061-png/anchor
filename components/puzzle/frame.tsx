@@ -9,6 +9,7 @@ import { ThinkTimer } from "@/components/ui/think-timer";
 import { Button } from "@/components/ui/button";
 import {
   HINT_LOCK_MS,
+  HINT_XP_COST,
   CATEGORY_LABELS,
   type Category,
 } from "@/lib/types";
@@ -162,7 +163,7 @@ function HintLadder({
           className="self-start"
         >
           {hintLoading ? "Thinking about it" : TIER_ASKS[nextTier]}
-          <span className="text-xs text-slate">· fades help, never the answer</span>
+          <span className="num text-slate">-{HINT_XP_COST[nextTier]} xp</span>
         </Button>
       )}
     </section>

@@ -7,7 +7,6 @@ import { FriendCodeCard } from "./friend-code-card";
 import { FriendsCard } from "./friends-card";
 import { SettingsCard } from "./settings-card";
 import { ChallengeCta } from "@/components/share/challenge-cta";
-import { ProgressShare } from "@/components/progress/xp-timeline";
 
 export const metadata = { title: "Profile" };
 
@@ -21,7 +20,7 @@ export default async function ProfilePage() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "display_name, avatar_emoji, school, year_group, friend_code, timezone, reminder_time, public_leaderboard, leaderboard_opt_in, xp, level, streak_current, streak_longest, created_at, id",
+      "display_name, avatar_emoji, school, year_group, friend_code, timezone, reminder_time, public_leaderboard, leaderboard_opt_in, xp, level, streak_current, streak_longest, created_at",
     )
     .eq("id", user.id)
     .single();
@@ -69,20 +68,11 @@ export default async function ProfilePage() {
 
       <ChallengeCta friendCode={profile.friend_code} />
 
-      <ProgressShare
-        userId={user.id}
-        friendCode={profile.friend_code}
-        streak={profile.streak_current}
-        level={profile.level}
-        xp={profile.xp}
-      />
-
       <FriendsCard />
 
       <SettingsCard
         userId={user.id}
         leaderboardOptIn={profile.leaderboard_opt_in ?? false}
-        publicLeaderboard={profile.public_leaderboard ?? true}
         reminderTime={profile.reminder_time?.slice(0, 5) ?? null}
         timezone={profile.timezone}
       />

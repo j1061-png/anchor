@@ -1,26 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  /* Core palette — warm, premium, student-focused */
-  --paper: #f4f2ec;
-  --ink: #12141a;
-  --slate: #5c6470;
+  /* UI palette — §7 of the spec. Everything derives from these. */
+  --paper: #e4e7dc;
+  --ink: #16190f;
+  /* Spec said #6e7a63; darkened one step so small text passes WCAG AA
+     (4.7:1 on paper, 5.5:1 on chalk) — the spec's own accessibility floor. */
+  --slate: #5d6852;
   --flag: #e01b54;
-  --gold: #e8a317;
-  --chalk: #ffffff;
-  --mist: #e8eaef;
-  --accent: #2563eb;
-  --accent-soft: #dbeafe;
-  --success: #059669;
-  --success-soft: #d1fae5;
+  --gold: #f0b429;
+  --chalk: #f7f8f4;
 
-  /* Puzzle block fills */
-  --block-1: #2563eb;
-  --block-2: #ea580c;
-  --block-3: #059669;
-  --block-4: #0891b2;
-  --block-5: #84cc16;
-  --block-6: #dc2626;
+  /* Puzzle block fills — flat, saturated, never used for UI chrome. */
+  --block-1: #2e64e0; /* cobalt */
+  --block-2: #e8702a; /* orange */
+  --block-3: #23a55a; /* green */
+  --block-4: #17a2b0; /* teal */
+  --block-5: #a3b520; /* chartreuse */
+  --block-6: #d63b2f; /* red */
 
   color-scheme: light;
 }
@@ -32,11 +29,6 @@
   --color-flag: var(--flag);
   --color-gold: var(--gold);
   --color-chalk: var(--chalk);
-  --color-mist: var(--mist);
-  --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
-  --color-success: var(--success);
-  --color-success-soft: var(--success-soft);
   --color-block-1: var(--block-1);
   --color-block-2: var(--block-2);
   --color-block-3: var(--block-3);
@@ -48,136 +40,64 @@
   --font-body: var(--font-public-sans);
   --font-data: var(--font-martian-mono);
 
-  --radius-ctl: 8px;
-  --radius-card: 16px;
-  --radius-pill: 999px;
+  /* Radius roles: controls 2px, cards 10px, pills 999px. Nothing else. */
+  --radius-ctl: 2px;
+  --radius-card: 10px;
 
-  --shadow-sm: 0 1px 2px rgb(18 20 26 / 0.04);
-  --shadow-md: 0 4px 16px rgb(18 20 26 / 0.08);
-  --shadow-lg: 0 12px 40px rgb(18 20 26 / 0.12);
-  --shadow-plane: var(--shadow-md);
-  --shadow-plane-sm: var(--shadow-sm);
+  --shadow-plane: 4px 4px 0 0 rgb(22 25 15 / 0.12);
+  --shadow-plane-sm: 2px 2px 0 0 rgb(22 25 15 / 0.12);
 }
 
 body {
-  background: var(--paper);
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgb(37 99 235 / 0.06), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 100%, rgb(232 163 23 / 0.05), transparent);
+  background-color: var(--paper);
+  /* 8px graph-paper grid, faint */
+  background-image: linear-gradient(
+      to right,
+      rgb(22 25 15 / 0.05) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgb(22 25 15 / 0.05) 1px, transparent 1px);
+  background-size: 8px 8px;
   color: var(--ink);
-  font-family: var(--font-public-sans), system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
+  font-family: var(--font-public-sans), sans-serif;
 }
 
-/* Modern card surfaces */
+/* A card: solid chalk plane, 1px ink border, hard offset shadow. */
 .plane {
   background: var(--chalk);
-  border: 1px solid rgb(18 20 26 / 0.08);
+  border: 1px solid var(--ink);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-plane);
 }
 
 .plane-sm {
   background: var(--chalk);
-  border: 1px solid rgb(18 20 26 / 0.08);
+  border: 1px solid var(--ink);
   border-radius: var(--radius-ctl);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-plane-sm);
 }
 
-.plane-glass {
-  background: rgb(255 255 255 / 0.72);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgb(18 20 26 / 0.06);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-md);
-}
-
-.plane-interactive {
-  background: var(--chalk);
-  border: 1px solid rgb(18 20 26 / 0.08);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-md);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.plane-interactive:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  border-color: rgb(18 20 26 / 0.12);
-}
-
+/* Focus: visible, crimson, everywhere. */
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--flag);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--accent-soft);
+  background: var(--gold);
   color: var(--ink);
 }
 
+/* Numbers are always mono. Apply to timers, scores, XP, ranks. */
 .num {
   font-family: var(--font-martian-mono), monospace;
   font-variant-numeric: tabular-nums;
 }
 
-/* Page section rhythm */
-.page-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.page-title {
-  font-family: var(--font-bricolage), sans-serif;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-
-.page-subtitle {
-  max-width: 42rem;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--slate);
-}
-
-/* Principle callout — ties features to cognitive-offloading research */
-.principle-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  border-radius: var(--radius-pill);
-  background: var(--accent-soft);
-  padding: 0.25rem 0.75rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-
 @keyframes deal-in {
   from {
     opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -186,39 +106,48 @@ body {
 }
 
 @keyframes flash-correct {
-  0%, 100% { background-color: var(--chalk); }
-  40% { background-color: var(--success-soft); }
+  0%,
+  100% {
+    background-color: var(--chalk);
+  }
+  40% {
+    background-color: color-mix(in srgb, var(--block-3) 25%, var(--chalk));
+  }
 }
 
 @keyframes flash-wrong {
-  0%, 100% { background-color: var(--chalk); }
-  40% { background-color: color-mix(in srgb, var(--flag) 15%, var(--chalk)); }
+  0%,
+  100% {
+    background-color: var(--chalk);
+  }
+  40% {
+    background-color: color-mix(in srgb, var(--flag) 20%, var(--chalk));
+  }
 }
 
 @keyframes block-pop {
-  0% { transform: scale(0.85); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes line-clear {
-  to { transform: scale(0.1); opacity: 0; }
-}
-
-@keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgb(37 99 235 / 0.4); }
-  70% { box-shadow: 0 0 0 8px rgb(37 99 235 / 0); }
-  100% { box-shadow: 0 0 0 0 rgb(37 99 235 / 0); }
+  to {
+    transform: scale(0.1);
+    opacity: 0;
+  }
 }
 
 .deal-in {
-  animation: deal-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation: deal-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
 
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.1s; }
-.stagger-3 { animation-delay: 0.15s; }
-.stagger-4 { animation-delay: 0.2s; }
-
+/* Kill all motion when the user asked for none. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -230,55 +159,12 @@ body {
   }
 }
 
+/* Native shell (iPhone notch): headers pad down into the safe area and the
+   secondary strip sticks below the taller bar. env() is 0 in web browsers,
+   so none of this changes the site. */
 header.sticky {
   padding-top: env(safe-area-inset-top);
 }
-
 .sticky.top-14 {
   top: calc(3.5rem + env(safe-area-inset-top));
-}
-
-/* XP timeline track */
-.xp-timeline-track {
-  position: relative;
-  padding-left: 1.5rem;
-}
-
-.xp-timeline-track::before {
-  content: "";
-  position: absolute;
-  left: 0.4375rem;
-  top: 0.5rem;
-  bottom: 0.5rem;
-  width: 2px;
-  background: linear-gradient(to bottom, var(--accent), var(--mist));
-  border-radius: 1px;
-}
-
-.xp-timeline-node {
-  position: relative;
-  padding-bottom: 1.5rem;
-}
-
-.xp-timeline-node::before {
-  content: "";
-  position: absolute;
-  left: -1.0625rem;
-  top: 0.375rem;
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 50%;
-  background: var(--chalk);
-  border: 2px solid var(--accent);
-  z-index: 1;
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.xp-timeline-node[data-milestone="true"]::before {
-  background: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
-}
-
-.xp-timeline-node[data-active="true"]::before {
-  animation: pulse-ring 1.5s ease infinite;
 }

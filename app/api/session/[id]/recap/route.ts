@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { ACHIEVEMENTS } from "@/lib/achievements";
 import type { Category, SessionSlot } from "@/lib/types";
 
 export async function GET(
@@ -93,9 +92,6 @@ export async function GET(
     },
     sessionType: session.type,
     feedback: session.feedback ?? "",
-    newAchievements: (newAchievements ?? []).map((a) => {
-      const def = ACHIEVEMENTS.find((d) => d.key === a.achievement_key);
-      return { key: a.achievement_key, name: def?.name ?? a.achievement_key };
-    }),
+    newAchievements: (newAchievements ?? []).map((a) => a.achievement_key),
   });
 }

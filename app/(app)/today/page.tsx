@@ -5,21 +5,20 @@ import { BlockMeter } from "@/components/ui/think-timer";
 import { StartSessionButton } from "./start-button";
 import { MidnightCountdown } from "./countdown";
 import { ChallengeCta } from "@/components/share/challenge-cta";
-import { ProgressShare } from "@/components/progress/xp-timeline";
 import Link from "next/link";
 
-export const metadata = { title: "Train" };
+export const metadata = { title: "Today" };
 
 export default async function TodayPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) return null; // middleware guards this
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, timezone, streak_current, streak_freezes, display_name, friend_code, xp, level")
+    .select("timezone, streak_current, streak_freezes, display_name, friend_code")
     .eq("id", user.id)
     .single();
   const today = localDate(profile?.timezone ?? "UTC");
@@ -43,33 +42,24 @@ export default async function TodayPage() {
 
   if (!session) {
     return (
-      <div className="flex flex-col gap-8">
-        <header className="page-header deal-in">
-          <span className="principle-tag">Attempt before AI</span>
-          <h1 className="page-title">Today&apos;s five</h1>
-          <p className="page-subtitle">
-            Five puzzles picked for where you&apos;re weakest, {firstName}. No help
-            for the first 45 seconds — the struggle is the mechanism.
+      <div className="flex flex-col gap-6">
+        <section className="plane p-6">
+          <h1 className="font-display text-3xl font-extrabold tracking-tight">
+            Today&apos;s five.
+          </h1>
+          <p className="mt-2 max-w-sm text-slate">
+            Five puzzles picked for where you are weakest, {firstName}. No help
+            for the first 45 seconds of each.
           </p>
-        </header>
-
-        <section className="plane-interactive p-8 deal-in stagger-1">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="num font-display text-5xl font-extrabold">5</p>
-              <p className="mt-1 text-slate">puzzles · ~10 minutes · brain-only first</p>
-            </div>
-            <StartSessionButton label="Start today's session" />
+          <div className="mt-5">
+            <StartSessionButton label="Start session" />
           </div>
         </section>
-
-        <div className="grid gap-6 lg:grid-cols-2">
-          <StreakCard
-            streak={profile?.streak_current ?? 0}
-            freezes={profile?.streak_freezes ?? 0}
-          />
-          <ChallengeCta friendCode={profile?.friend_code} />
-        </div>
+        <StreakCard
+          streak={profile?.streak_current ?? 0}
+          freezes={profile?.streak_freezes ?? 0}
+        />
+        <ChallengeCta friendCode={profile?.friend_code} />
       </div>
     );
   }
@@ -77,37 +67,29 @@ export default async function TodayPage() {
   if (session.status === "in_progress") {
     const slots = session.puzzle_seeds as SessionSlot[];
     return (
-      <div className="flex flex-col gap-8">
-        <header className="page-header">
-          <span className="principle-tag">In progress</span>
-          <h1 className="page-title">Session started</h1>
-          <p className="page-subtitle">
-            <span className="num font-semibold text-ink">{answered ?? 0}/5</span> answered.
+      <div className="flex flex-col gap-6">
+        <section className="plane p-6">
+          <h1 className="font-display text-3xl font-extrabold tracking-tight">
+            Session started.
+          </h1>
+          <p className="mt-2 text-slate">
+            <span className="num text-ink">{answered ?? 0}/5</span> answered.
             The clock only runs while a puzzle is open.
           </p>
-        </header>
-
-        <section className="plane p-6">
-          <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ol className="mt-4 flex flex-wrap gap-2">
             {slots.map((s, i) => (
               <li
                 key={i}
-                className={`plane-sm flex items-center justify-between px-4 py-3 text-sm ${
-                  i < (answered ?? 0) ? "opacity-50" : ""
-                }`}
+                className={`plane-sm px-3 py-1.5 text-sm ${i < (answered ?? 0) ? "opacity-50" : ""}`}
               >
-                <span className="font-semibold">{PUZZLE_LABELS[s.type]}</span>
-                {i < (answered ?? 0) && (
-                  <span className="text-xs text-success">Done</span>
-                )}
+                {PUZZLE_LABELS[s.type]}
               </li>
             ))}
           </ol>
-          <div className="mt-6">
+          <div className="mt-5">
             <StartSessionButton label="Continue session" sessionId={session.id} />
           </div>
         </section>
-
         <StreakCard
           streak={profile?.streak_current ?? 0}
           freezes={profile?.streak_freezes ?? 0}
@@ -116,77 +98,66 @@ export default async function TodayPage() {
     );
   }
 
+  // Complete: recap summary + countdown, no replay.
   return (
-    <div className="flex flex-col gap-8">
-      <header className="page-header deal-in">
-        <span className="principle-tag">Done for today</span>
-        <h1 className="page-title">Session complete</h1>
-        <p className="page-subtitle">
-          <span className="num font-semibold text-ink">
+    <div className="flex flex-col gap-6">
+      <section className="plane p-6">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">
+          Done for today.
+        </h1>
+        <p className="mt-2 text-slate">
+          <span className="num text-ink">
             {Math.round((session.accuracy ?? 0) * 5)}/5
           </span>{" "}
-          solved · <span className="num font-semibold text-ink">{session.xp_earned}</span> XP
-          for independent thinking
+          solved, <span className="num text-ink">{session.xp_earned}</span> XP
+          banked.
         </p>
-      </header>
-
-      {session.feedback && (
-        <section className="plane border-l-4 border-l-accent p-6 deal-in">
-          <p className="text-sm leading-relaxed">{session.feedback}</p>
-        </section>
-      )}
-
-      <div className="flex flex-wrap gap-4">
-        <Link
-          href={`/session/${session.id}`}
-          className="inline-flex items-center rounded-(--radius-pill) bg-accent px-6 py-3 text-sm font-semibold text-chalk hover:bg-accent/90"
-        >
-          View full recap & share
-        </Link>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="plane p-6">
-          <p className="text-sm text-slate">Tomorrow&apos;s five unlocks in</p>
-          <MidnightCountdown />
-        </section>
-        <StreakCard
-          streak={profile?.streak_current ?? 0}
-          freezes={profile?.streak_freezes ?? 0}
-        />
-      </div>
-
-      {profile && (
-        <ProgressShare
-          userId={profile.id}
-          friendCode={profile.friend_code}
-          streak={profile.streak_current}
-          level={profile.level}
-          xp={profile.xp}
-        />
-      )}
-
+        {session.feedback && (
+          <p className="mt-3 max-w-md text-sm leading-relaxed">{session.feedback}</p>
+        )}
+        <div className="mt-4 flex items-center gap-3">
+          <Link
+            href={`/session/${session.id}`}
+            className="text-sm font-semibold underline decoration-slate underline-offset-4 hover:decoration-ink"
+          >
+            See the full recap
+          </Link>
+        </div>
+      </section>
+      <section className="plane p-6">
+        <p className="text-sm text-slate">Tomorrow&apos;s five in</p>
+        <MidnightCountdown />
+      </section>
       <ChallengeCta friendCode={profile?.friend_code} />
+      <StreakCard
+        streak={profile?.streak_current ?? 0}
+        freezes={profile?.streak_freezes ?? 0}
+      />
     </div>
   );
 }
 
+// The streak counts days you did retrieval, not days you opened the app.
+// RESEARCH-SPEC R4 and A7 are explicit: a usage streak is exactly the thing
+// that must not be rewarded, because completion-contingent rewards erode the
+// motivation the product exists to protect. So the count is tied to attempts,
+// and the copy says plainly that showing up is not the measure.
 function StreakCard({ streak, freezes }: { streak: number; freezes: number }) {
   return (
-    <section className="plane flex items-center justify-between p-6">
+    <section className="plane flex items-center justify-between p-5">
       <div>
-        <p className="num font-display text-4xl font-extrabold">{streak}</p>
-        <p className="mt-1 text-sm text-slate">
-          Recall days — attempts, not opens
+        <p className="num font-display text-2xl font-extrabold">{streak}</p>
+        <p className="text-sm text-slate">
+          Days you practised recall
           {freezes > 0 && (
             <>
               {" · "}
-              <span className="num">{freezes}</span> freeze{freezes === 1 ? "" : "s"}
+              <span className="num">{freezes}</span> freeze{freezes === 1 ? "" : "s"} banked
             </>
           )}
         </p>
-        <p className="mt-2 text-xs text-slate">
-          Showing up isn&apos;t rewarded. Doing the thinking is.
+        <p className="mt-1 text-xs text-slate">
+          Counts attempts, not opens. Turning up is not the point.
         </p>
       </div>
       <BlockMeter

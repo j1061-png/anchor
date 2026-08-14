@@ -1,35 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server.js";
 import { createServerClient } from "@supabase/ssr";
-import { getSupabasePublicConfig } from "@/lib/env";
 
-const GUARDED = [
-  "/today",
-  "/learn",
-  "/review",
-  "/independence",
-  "/journal",
-  "/brain-only",
-  "/about-the-evidence",
-  "/iphone",
-  "/dashboard",
-  "/leaderboard",
-  "/profile",
-  "/session",
-  "/practice",
-  "/onboarding",
-];
+const GUARDED = ["/today", "/dashboard", "/leaderboard", "/profile", "/session", "/practice", "/onboarding"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const config = getSupabasePublicConfig();
-  if (!config) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) {
     return response;
   }
 
   const supabase = createServerClient(
-    config.url,
-    config.anonKey,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
@@ -55,13 +40,6 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-
-  if (user && pathname === "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/today";
-    return NextResponse.redirect(url);
-  }
-
   const guarded = GUARDED.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
@@ -79,7 +57,8 @@ export async function middleware(request: NextRequest) {
 export default middleware;
 
 export const config = {
+  runtime: "nodejs",
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/share|research/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|html)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api/share|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

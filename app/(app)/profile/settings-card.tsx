@@ -9,16 +9,15 @@ import type { ProfileRow } from "@/lib/database.types";
 
 export interface SettingsCardProps {
   userId: string;
+  // R3: opt-in to the improvement / independence boards. Default off.
   leaderboardOptIn: boolean;
-  publicLeaderboard: boolean;
-  reminderTime: string | null;
+  reminderTime: string | null; // "HH:MM" or null
   timezone: string;
 }
 
 export function SettingsCard(props: SettingsCardProps) {
   const router = useRouter();
   const [publicBoard, setPublicBoard] = useState(props.leaderboardOptIn);
-  const [publicShare, setPublicShare] = useState(props.publicLeaderboard);
   const [reminder, setReminder] = useState(props.reminderTime ?? "");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,17 +68,6 @@ export function SettingsCard(props: SettingsCardProps) {
     return true;
   }
 
-  async function togglePublicShare() {
-    const next = !publicShare;
-    setError(null);
-    setPublicShare(next);
-    const ok = await write({ public_leaderboard: next });
-    if (!ok) {
-      setPublicShare(!next);
-      setError("The setting didn't save. Try again.");
-    }
-  }
-
   async function toggleLeaderboard() {
     const next = !publicBoard;
     setError(null);
@@ -115,35 +103,6 @@ export function SettingsCard(props: SettingsCardProps) {
       </div>
 
       <div className="mt-4 flex items-start justify-between gap-4">
-        <div>
-          <p id="public-share-label" className="text-sm font-semibold">
-            Allow progress share cards
-          </p>
-          <p className="mt-0.5 text-xs text-slate">
-            When on, friends can generate share images with your streak and level.
-            Off hides your data from public share cards.
-          </p>
-        </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={publicShare}
-          aria-labelledby="public-share-label"
-          onClick={togglePublicShare}
-          className="flex min-h-11 cursor-pointer items-center"
-        >
-          <span
-            aria-hidden
-            className={`flex h-7 w-12 items-center rounded-(--radius-ctl) border border-ink/20 px-1 transition-colors ${
-              publicShare ? "justify-end bg-accent" : "justify-start bg-mist"
-            }`}
-          >
-            <span className={`size-4.5 rounded-full ${publicShare ? "bg-chalk" : "bg-slate/40"}`} />
-          </span>
-        </button>
-      </div>
-
-      <div className="mt-5 flex items-start justify-between gap-4">
         <div>
           <p id="public-board-label" className="text-sm font-semibold">
             Put me on the improvement boards

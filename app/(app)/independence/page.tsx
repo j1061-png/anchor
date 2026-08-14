@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { XpTimeline, ProgressShare } from "@/components/progress/xp-timeline";
 import {
   MIN_SAMPLE,
   assistedUnaidedGap,
@@ -34,7 +33,7 @@ import { parseWindow, previousPhrase, windowPhrase } from "./window";
 // Tone is fixed by G3: state the number, attach the definition, offer a next
 // action, and never dress a figure up as a verdict on the student.
 
-export const metadata = { title: "Progress" };
+export const metadata = { title: "Independence" };
 
 const DAY_MS = 86_400_000;
 
@@ -88,13 +87,7 @@ export default async function IndependencePage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data: profileRow } = await supabase
-    .from("profiles")
-    .select("id, friend_code, xp, level, streak_current")
-    .eq("id", user.id)
-    .single();
+  if (!user) return null; // middleware guards this
 
   const days = parseWindow((await searchParams).days);
 
@@ -178,27 +171,17 @@ export default async function IndependencePage({
   const comparison = previousPhrase(days);
 
   return (
-    <div className="flex flex-col gap-6">
-      <header className="page-header">
-        <span className="principle-tag">Cognitive independence</span>
-        <h1 className="page-title">Your progress</h1>
-        <p className="page-subtitle">
-          Anchor tracks how much thinking stays in your head — not a composite score,
-          but six dimensions of independence grounded in offloading research.
+    <div className="flex flex-col gap-4">
+      <header className="flex flex-col gap-2">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">
+          Independence
+        </h1>
+        <p className="text-sm text-slate">
+          What you did inside Anchor over {windowText}: how much came out
+          unaided, how much help was used, and how well your confidence matched
+          the result. Counts and definitions, no ranking.
         </p>
       </header>
-
-      <XpTimeline className="deal-in" />
-
-      {profileRow && (
-        <ProgressShare
-          userId={profileRow.id}
-          friendCode={profileRow.friend_code}
-          streak={profileRow.streak_current}
-          level={profileRow.level}
-          xp={profileRow.xp}
-        />
-      )}
 
       <RangeTabs />
 

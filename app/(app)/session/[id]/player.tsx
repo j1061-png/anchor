@@ -43,13 +43,7 @@ type Stage =
   | { kind: "puzzle"; payload: SessionPayload; slotIndex: number }
   | { kind: "recap" };
 
-export function SessionPlayer({
-  sessionId,
-  friendCode,
-}: {
-  sessionId: string;
-  friendCode?: string;
-}) {
+export function SessionPlayer({ sessionId }: { sessionId: string }) {
   const [stage, setStage] = useState<Stage>({ kind: "loading" });
   const [startedAt, setStartedAt] = useState(Date.now());
   const [hintTexts, setHintTexts] = useState<string[]>([]);
@@ -208,7 +202,7 @@ export function SessionPlayer({
   }
 
   if (stage.kind === "recap") {
-    return <SessionRecap sessionId={sessionId} friendCode={friendCode} />;
+    return <SessionRecap sessionId={sessionId} />;
   }
 
   if (stage.kind === "intro") {

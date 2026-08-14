@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { isAppleAuthEnabled } from "@/lib/env";
 
 // Google and Apple sign-in. Both buttons follow the providers' brand rules
 // exactly and are exempt from the app palette. Apple also satisfies App Store
@@ -11,15 +10,13 @@ import { isAppleAuthEnabled } from "@/lib/env";
 export function OAuthButtons({ next }: { next: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"google" | "apple" | null>(null);
-  const appleEnabled = isAppleAuthEnabled();
+  const appleEnabled = process.env.NEXT_PUBLIC_APPLE_AUTH_ENABLED === "true";
 
   async function signInWith(provider: "google" | "apple") {
     setError(null);
     setBusy(provider);
     const supabase = createClient();
-    // Always use the URL the user is actually on — NEXT_PUBLIC_SITE_URL may
-    // point at production (zeta) while testing on a preview domain.
-    const site = window.location.origin;
+    const site = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
     const target =
       next && next.startsWith("/") && !next.startsWith("//")
         ? `?next=${encodeURIComponent(next)}`

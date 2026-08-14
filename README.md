@@ -3,30 +3,6 @@
 Daily cognitive training that fights cognitive offloading. Five puzzles a day,
 no help for the first 45 seconds.
 
-## Quick start — marketing site only (local)
-
-No Supabase or API keys needed to view the research deck and marketing pages.
-
-```bash
-git clone https://github.com/j1061-png/anchor.git
-cd anchor
-git checkout cursor/marketing-site-fbe4   # marketing branch (PR #1)
-npm install
-cp .env.example .env.local                # empty values are fine for marketing
-npm run dev:clean
-```
-
-Open **http://localhost:5730/** — interactive research deck embedded on the homepage.  
-Full deck only: **http://localhost:5730/research**
-
-If you see a blank page or 500 error, stop any old server and run `npm run dev:clean` again (clears a corrupted `.next` cache).
-
-Production preview locally:
-
-```bash
-npm run build && npm run start -- -p 5730
-```
-
 Stack: Next.js 15 (App Router, TS strict), Tailwind v4, Supabase (Postgres +
 Auth + RLS), Anthropic API (`claude-sonnet-4-6`, server routes only),
 Recharts, Zod. Deploys to Vercel.
@@ -140,28 +116,20 @@ you run on), your production URL in prod.
 
 ## 7. Deploy to Vercel
 
-**Live Fable UI (modern overhaul):** https://anchor-mu-mocha.vercel.app — this project
-is connected to GitHub and deploys from `main`.
-
-**Stale URL:** https://anchor-one-zeta.vercel.app still serves an **old pre-Fable build**
-from a separate Vercel project. To use `anchor-one-zeta` with the modern UI:
-
-1. Open [Vercel Dashboard](https://vercel.com/dashboard) → the project that deploys from
-   `j1061-png/anchor` (production URL likely `anchor-mu-mocha.vercel.app`)
-2. **Settings → Domains** → Add `anchor-one-zeta.vercel.app`
-3. Open the **old** `anchor-one` project (if it still exists) → **Settings → Domains** →
-   Remove `anchor-one-zeta.vercel.app` from there
-4. Redeploy the GitHub-connected project from latest `main`
-
-If the project is not in your dashboard yet:
-
-1. Go to [vercel.com/new](https://vercel.com/new) → **Import** `j1061-png/anchor`
-2. Framework: **Next.js** (auto-detected). Production branch: **`main`**
-3. Env vars are in `vercel.json` for public values; add secrets in the dashboard:
+1. Push the repo to GitHub and import it in Vercel (framework auto-detected).
+2. Add env vars (Production + Preview):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `ANTHROPIC_API_KEY`
-4. Click **Deploy**
+   - `NEXT_PUBLIC_SITE_URL` = `https://<your-domain>`
+   - `NEXT_PUBLIC_APPLE_AUTH_ENABLED` = `false` until §4 is done
+3. Deploy:
 
-**Optional — GitHub Actions deploy:** add repo secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and
-`VERCEL_PROJECT_ID` (from Vercel project Settings → General). The workflow in
-`.github/workflows/vercel-production.yml` deploys on every push to `main`.
+```bash
+npx vercel --prod
+```
+
+4. Add the production callback URL to Supabase Auth URL configuration (§1.3).
+   The Google OAuth redirect URI stays the same — it points at Supabase, not
+   your domain.

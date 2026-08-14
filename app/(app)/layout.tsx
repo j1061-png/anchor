@@ -1,18 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/env";
-import { SetupRequired } from "@/components/setup-required";
 import { Nav } from "@/components/nav";
 
-export const dynamic = "force-dynamic";
-
+// Shell for every signed-in page. Middleware already guards these routes;
+// the user check here is a second line, not the gate.
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  if (!isSupabaseConfigured()) {
-    return <SetupRequired />;
-  }
-
   const supabase = await createClient();
 
   const {
@@ -26,6 +20,7 @@ export default async function AppLayout({
     .eq("id", user.id)
     .single();
 
+  // No display name means onboarding never finished.
   if (!profile?.display_name) redirect("/onboarding");
 
   return (
@@ -35,8 +30,8 @@ export default async function AppLayout({
         avatarEmoji={profile.avatar_emoji}
         streak={profile.streak_current}
       />
-      {/* Wider layout; sidebar offset on desktop; bottom nav clearance on mobile */}
-      <main className="mx-auto w-full max-w-6xl px-4 pb-28 pt-4 sm:px-6 sm:pt-8 lg:ml-64 lg:px-8">
+      {/* pb-24 clears the fixed bottom tab bar on mobile. */}
+      <main className="mx-auto w-full max-w-2xl px-4 pb-24 pt-4 sm:pt-8">
         {children}
       </main>
     </div>

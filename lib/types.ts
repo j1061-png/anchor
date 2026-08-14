@@ -38,7 +38,7 @@ export const PUZZLE_CATEGORIES: Record<PuzzleType, [Category, Category]> = {
 };
 
 export const PUZZLE_LABELS: Record<PuzzleType, string> = {
-  blockfit: "Block Blast",
+  blockfit: "BlockFit",
   ruleshift: "RuleShift",
   recall: "Recall",
   mentalmath: "MentalMath",

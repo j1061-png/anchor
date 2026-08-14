@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/env";
-import { SetupRequired } from "@/components/setup-required";
 import { Wordmark } from "@/components/wordmark";
 import { ResetForm } from "./reset-form";
 
@@ -11,10 +9,6 @@ export const metadata: Metadata = { title: "Set a new password" };
 // Reached from the emailed recovery link via /auth/callback?next=/auth/reset.
 // The callback already exchanged the code, so a valid link means a session.
 export default async function ResetPage() {
-  if (!isSupabaseConfigured()) {
-    return <SetupRequired />;
-  }
-
   const supabase = await createClient();
   const {
     data: { user },
