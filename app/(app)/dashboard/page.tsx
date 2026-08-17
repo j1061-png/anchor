@@ -121,7 +121,7 @@ export default async function DashboardPage() {
     heatCounts[day] = (heatCounts[day] ?? 0) + 1;
   }
 
-  const unlockedAchievements = (unlocked ?? []).map((a) => ({
+  const earnedAchievements = (unlocked ?? []).map((a) => ({
     key: a.achievement_key,
     id: a.id,
     at: (a as { unlocked_at?: string | null }).unlocked_at ?? null,
@@ -351,7 +351,7 @@ export default async function DashboardPage() {
       >
         <AchievementGrid
           defs={ACHIEVEMENTS}
-          unlocked={unlockedAchievements}
+          earned={earnedAchievements}
           progress={achievementProgress}
           share={{
             optedIn: profile?.leaderboard_opt_in ?? false,

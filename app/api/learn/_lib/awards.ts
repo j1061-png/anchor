@@ -1,5 +1,4 @@
 import "server-only";
-import { levelForXp } from "@/lib/types";
 import { scoreAttempt, type XpInput, type XpResult } from "@/lib/research/xp";
 import { buildProfile, type IndependenceDailyRow } from "@/lib/research/independence";
 import { calibrationError } from "@/lib/research/calibration";

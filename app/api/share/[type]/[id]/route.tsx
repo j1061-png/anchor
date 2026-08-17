@@ -66,19 +66,32 @@ function fmtDate(iso: string): string {
   });
 }
 
+/** Fixed-colour copy of components/wordmark.tsx — keep the geometry in sync. */
 function OgWordmark() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-        <div style={{ display: "flex", gap: 7 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 4, backgroundColor: INK }} />
-          <div style={{ width: 30, height: 30, borderRadius: 4, backgroundColor: FLAG }} />
-        </div>
-        <div style={{ display: "flex", gap: 7 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 4, backgroundColor: INK }} />
-          <div style={{ width: 30, height: 30, borderRadius: 4, backgroundColor: INK }} />
-        </div>
-      </div>
+    <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+      <svg width={72} height={72} viewBox="0 0 24 24" fill="none">
+        <path
+          d="M9.4 7.2V5.6a2.6 2.6 0 0 1 5.2 0v1.6"
+          stroke={INK}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <rect x="7.4" y="7.2" width="9.2" height="5.2" rx="1.7" fill={INK} />
+        <circle cx="12" cy="9.8" r="1.2" fill={FLAG} />
+        <path
+          d="M12 12.4v9.9"
+          stroke={INK}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M4.8 15.2a7.2 7.2 0 0 0 14.4 0M4.8 15.4v-2.8M19.2 15.4v-2.8"
+          stroke={INK}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
       <div style={{ fontSize: 64, fontWeight: 700, color: INK, letterSpacing: -2 }}>
         anchor
       </div>

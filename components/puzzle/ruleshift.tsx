@@ -178,6 +178,20 @@ export function RuleShiftPuzzle({ puzzle, onSolve, onGrade }: PuzzleProps) {
 
       {error && <p className="text-sm text-flag">{error}</p>}
 
+      {/* Colour alone must not carry the outcome — say it in words too. */}
+      {phase === "done" && wasCorrect !== null && (
+        <p
+          role="status"
+          className={`text-sm font-semibold ${
+            wasCorrect ? "text-[var(--green)]" : "text-flag"
+          }`}
+        >
+          {wasCorrect
+            ? "Correct — you found the rule."
+            : "Not this one. The right output is marked above; compare it with your pick before moving on."}
+        </p>
+      )}
+
       {pending ? (
         <Button onClick={() => onSolve(pending)} className="self-start">
           Next puzzle
