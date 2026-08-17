@@ -1,7 +1,7 @@
 import type { ReactElement, SVGProps } from "react";
 
 /* One stroke-based icon set at a single weight. Replaces the emoji and the
-   bespoke per-surface SVGs that made the old nav feel inconsistent. */
+   one-off per-surface SVGs that made the old nav feel inconsistent. */
 
 export type IconName =
   | "today"

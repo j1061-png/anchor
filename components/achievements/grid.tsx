@@ -24,7 +24,7 @@ import { ShareInline } from "@/components/share/share-inline";
 // An earned item carries its own share affordance. That is what makes the
 // `achievement` card in app/api/share/[type]/[id] reachable from the UI at all.
 
-export interface UnlockedAchievement {
+export interface EarnedAchievement {
   /** achievements.achievement_key */
   key: string;
   /** achievements.id — the row the share-card route renders from. */
@@ -35,7 +35,7 @@ export interface UnlockedAchievement {
 
 interface AchievementGridProps {
   defs: AchievementDef[];
-  unlocked: UnlockedAchievement[];
+  earned: EarnedAchievement[];
   /**
    * Current value of each progress metric. Anything missing simply means a
    * locked tile shows its hint with no bar — never an invented number.
@@ -94,11 +94,11 @@ function formatEarned(iso: string): string | null {
 
 export function AchievementGrid({
   defs,
-  unlocked,
+  earned,
   progress,
   share,
 }: AchievementGridProps) {
-  const earned = new Map(unlocked.map((u) => [u.key, u]));
+  const earnedByKey = new Map(earned.map((u) => [u.key, u]));
 
   if (defs.length === 0) {
     return (
@@ -126,7 +126,7 @@ export function AchievementGrid({
           heading={ACHIEVEMENT_CATEGORY_LABELS[category]}
           blurb={ACHIEVEMENT_CATEGORY_BLURBS[category]}
           items={items}
-          earned={earned}
+          earned={earnedByKey}
           progress={progress}
           share={share}
         />
@@ -135,7 +135,7 @@ export function AchievementGrid({
         <Group
           heading="Everything else"
           items={orphans}
-          earned={earned}
+          earned={earnedByKey}
           progress={progress}
           share={share}
         />
@@ -155,7 +155,7 @@ function Group({
   heading: string;
   blurb?: string;
   items: AchievementDef[];
-  earned: Map<string, UnlockedAchievement>;
+  earned: Map<string, EarnedAchievement>;
   progress?: AchievementProgress;
   share?: AchievementGridProps["share"];
 }) {
@@ -199,7 +199,7 @@ function EarnedTile({
   share,
 }: {
   def: AchievementDef;
-  row: UnlockedAchievement;
+  row: EarnedAchievement;
   share?: AchievementGridProps["share"];
 }) {
   const on = row.at ? formatEarned(row.at) : null;
