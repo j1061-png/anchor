@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { broke, fail } from "../_lib/db";
-import { currentUser, loadContext } from "../_lib/context";
+import { buildState, currentUser, loadContext } from "../_lib/context";
 import { escalate } from "../_lib/help";
+import { AI_HELP_OFF, hasAiConsent } from "@/lib/ai-consent";
 
 // POST /api/learn/stuck — the explicit "I'm stuck" escalation (B7, B14).
 //
@@ -31,6 +32,17 @@ export async function POST(request: Request) {
   if (!loaded.ok) {
     if (loaded.failure.kind === "not_found") return fail("That item is not one of yours.", 404);
     return broke("stuck", loaded.failure.error, "Could not read that item. Try again.");
+  }
+
+  // Guideline 5.1.2(i). Saying "I'm stuck" does not open the AI gate any more
+  // than it opens the attempt gate: the rung it would serve is written by the
+  // provider from the attempt chain, and without consent that request is not
+  // made.
+  if (!(await hasAiConsent(user.id))) {
+    return NextResponse.json(
+      { error: AI_HELP_OFF, state: buildState(loaded.ctx) },
+      { status: 403 },
+    );
   }
 
   try {

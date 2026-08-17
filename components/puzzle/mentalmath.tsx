@@ -16,6 +16,10 @@ export function MentalMathPuzzle({ puzzle, onSolve, onGrade }: PuzzleProps) {
   const [flash, setFlash] = useState<"correct" | "wrong" | null>(null);
   const [remaining, setRemaining] = useState(data.timeLimitMs);
   const [shake, setShake] = useState(false);
+  // Held until the student presses Next, so the worked solution stays up.
+  const [pending, setPending] = useState<Parameters<typeof onSolve>[0] | null>(
+    null,
+  );
   const startRef = useRef(performance.now());
   const submitted = useRef(false);
   const entryRef = useRef("");
@@ -47,15 +51,15 @@ export function MentalMathPuzzle({ puzzle, onSolve, onGrade }: PuzzleProps) {
         const result = await onGrade(answer);
         setFlash(result.correct ? "correct" : "wrong");
         setPhase("done");
-        setTimeout(() => {
-          onSolve({
-            correct: result.correct,
-            timeMs: Math.round(performance.now() - startRef.current),
-            hintsUsed: 0,
-            attempts: 1,
-            answer,
-          });
-        }, 1200);
+        // Held until the student presses Next: advancing on a timer used to
+        // wipe the worked solution off the screen after 1.2s.
+        setPending({
+          correct: result.correct,
+          timeMs: Math.round(performance.now() - startRef.current),
+          hintsUsed: 0,
+          attempts: 1,
+          answer,
+        });
       } catch {
         submitted.current = false;
         setPhase("play");
@@ -315,13 +319,17 @@ export function MentalMathPuzzle({ puzzle, onSolve, onGrade }: PuzzleProps) {
         </div>
       )}
 
-      {(data.format === "target" || data.format === "backwards") && (
-        <Button
-          onClick={() => press("submit")}
-          disabled={phase !== "play" || entry.length === 0}
-        >
-          Check it
-        </Button>
+      {pending ? (
+        <Button onClick={() => onSolve(pending)}>Next puzzle</Button>
+      ) : (
+        (data.format === "target" || data.format === "backwards") && (
+          <Button
+            onClick={() => press("submit")}
+            disabled={phase !== "play" || entry.length === 0}
+          >
+            {phase === "grading" ? "Checking" : "Check it"}
+          </Button>
+        )
       )}
     </div>
   );

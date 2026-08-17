@@ -22,6 +22,13 @@ import {
 // Everything degrades to deterministic text when ANTHROPIC_API_KEY is absent or
 // the call fails, and `grounded: false` marks any output that does not follow
 // from the key (B8, I4).
+//
+// Every exported function takes `useModel`. False is the same road as a missing
+// API key — no request is made and the deterministic text stands in — and it is
+// how the routes honour a student who has not consented to their text being
+// sent to the provider (guideline 5.1.2(i), see `lib/ai-consent.ts`). Consent is
+// read on the server, never from the request, and the deterministic paths were
+// already there: nothing here invents new copy for the no-AI case.
 
 // AI_MODEL + ANTHROPIC_BASE_URL let dev point at any Anthropic-compatible
 // provider (e.g. DeepSeek); the default stays the spec's pinned model.
@@ -509,8 +516,10 @@ export async function generateHint(args: {
   attemptChain: readonly AttemptRecord[];
   helpLevel: HelpLevel;
   supportPolicy: SupportPolicy;
+  /** False withholds the model call entirely (no AI consent). */
+  useModel?: boolean;
 }): Promise<HintResult> {
-  const { item, answerKey, attemptChain, supportPolicy } = args;
+  const { item, answerKey, attemptChain, supportPolicy, useModel = true } = args;
   const level = effectiveHelpLevel(args.helpLevel, supportPolicy);
   const facts = readKey(answerKey, item);
 
@@ -554,7 +563,7 @@ export async function generateHint(args: {
     `Write the '${level}' hint.`,
   ].join("\n\n");
 
-  const raw = await ask(system, user, 200);
+  const raw = useModel ? await ask(system, user, 200) : null;
 
   // No key, no call, or a thrown request: the key still grounds a hint on its own.
   if (!raw) return deterministicHint(level, item, facts);
@@ -582,8 +591,10 @@ export async function diagnoseAttempt(args: {
   item: TutorItem;
   answerKey: unknown;
   studentAttempt: string;
+  /** False withholds the model call entirely (no AI consent). */
+  useModel?: boolean;
 }): Promise<AttemptDiagnosis> {
-  const { item, answerKey, studentAttempt } = args;
+  const { item, answerKey, studentAttempt, useModel = true } = args;
   const facts = readKey(answerKey, item);
   const misconceptions = readMisconceptions(item.common_misconceptions);
 
@@ -613,7 +624,7 @@ export async function diagnoseAttempt(args: {
       diagnosis: "Nothing to diagnose: there is no working to read yet.",
     };
   }
-  if (!facts.usable) return fallback();
+  if (!facts.usable || !useModel) return fallback();
 
   const tags = misconceptions.map((m) => m.tag);
   const system = [
@@ -669,8 +680,10 @@ export async function socraticTurn(args: {
   transcript: readonly TutorTurn[];
   studentMessage: string;
   supportPolicy: SupportPolicy;
+  /** False withholds the model call entirely (no AI consent). */
+  useModel?: boolean;
 }): Promise<SocraticResult> {
-  const { item, answerKey, transcript, studentMessage, supportPolicy } = args;
+  const { item, answerKey, transcript, studentMessage, supportPolicy, useModel = true } = args;
   const facts = readKey(answerKey, item);
   const misconceptions = readMisconceptions(item.common_misconceptions);
   const tags = misconceptions.map((m) => m.tag);
@@ -728,7 +741,7 @@ export async function socraticTurn(args: {
     "Write your turn.",
   ].join("\n\n");
 
-  const parsed = parseJson(await ask(system, user, 400));
+  const parsed = parseJson(useModel ? await ask(system, user, 400) : null);
   if (!parsed) return fallback();
 
   const reply = scalarText(parsed.reply);
@@ -858,8 +871,12 @@ export async function structuredFeedback(args: {
   answerKey: unknown;
   attempt: AttemptSummary;
   independence: IndependenceContext;
+  /** False withholds the model call entirely (no AI consent). The three
+   *  generated fields fall back to their deterministic text; the two computed
+   *  fields — how independently, assistance over-use — never used a model. */
+  useModel?: boolean;
 }): Promise<StructuredFeedback> {
-  const { item, answerKey, attempt, independence } = args;
+  const { item, answerKey, attempt, independence, useModel = true } = args;
   const facts = readKey(answerKey, item);
 
   const independenceLine = howIndependently(attempt, independence);
@@ -907,7 +924,7 @@ export async function structuredFeedback(args: {
     "Write the three fields and the counter-explanation.",
   ].join("\n\n");
 
-  const parsed = parseJson(await ask(system, user, 700));
+  const parsed = parseJson(useModel ? await ask(system, user, 700) : null);
   if (!parsed) return deterministic(true);
 
   const whatWasCorrect = scalarText(parsed.whatWasCorrect);
@@ -968,8 +985,11 @@ export async function scoreSelfExplanation(args: {
   item: TutorItem;
   answerKey: unknown;
   explanation: string;
+  /** False withholds the model call entirely (no AI consent): the 60 rubric
+   *  points still score, and the judgement line says why it was not judged. */
+  useModel?: boolean;
 }): Promise<SelfExplanationScore> {
-  const { item, answerKey, explanation } = args;
+  const { item, answerKey, explanation, useModel = true } = args;
   const facts = readKey(answerKey, item);
   const text = explanation.trim();
   const lower = text.toLowerCase();
@@ -994,7 +1014,16 @@ export async function scoreSelfExplanation(args: {
   let modelScored = false;
   let judgementNote = "Scored from the rubric alone — no model judgement was available.";
 
-  if (count >= 5 && facts.usable) {
+  if (count < 5) {
+    judgement = 0;
+    judgementNote = "Too short to judge against the route.";
+  } else if (!useModel) {
+    // Not a failure and not a fallback: the student said no to AI, so the
+    // explanation was never sent anywhere. Say that rather than implying the
+    // model was unavailable.
+    judgementNote =
+      "Scored from the rubric alone — AI help is off, so your explanation was not sent to the AI provider.";
+  } else if (facts.usable) {
     const system = [
       "You award 0 to 40 points for how well a student's explanation accounts for a verified solution route.",
       "You are NOT judging whether the item was answered correctly — that is graded elsewhere and is none of your business here.",
@@ -1015,9 +1044,6 @@ export async function scoreSelfExplanation(args: {
       modelScored = true;
       judgementNote = "Judged against the verified route, not against your answer.";
     }
-  } else if (count < 5) {
-    judgement = 0;
-    judgementNote = "Too short to judge against the route.";
   }
 
   const rubric: RubricLine[] = [

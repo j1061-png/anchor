@@ -1,5 +1,14 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { asResearchAdmin } from "@/lib/research/items";
+import { Page, PageHeader, Section } from "@/components/ui/page";
+import { Card, Well } from "@/components/ui/card";
+import { SegmentedNav } from "@/components/ui/segmented";
+import { Stat } from "@/components/ui/stat";
+import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
+import { WhyThis } from "@/components/ui/why-this";
+import { REVIEW_TABS } from "@/components/review/tabs";
 import { JournalForm, type OpenAttempt } from "./entry-form";
 import { MathText } from "@/components/math-text";
 
@@ -155,89 +164,189 @@ export default async function JournalPage({
   const recurringCount = entries.filter(recurring).length;
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="plane p-6">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Error journal.
-        </h1>
-        <p className="mt-2 max-w-md text-slate">
-          Write down what went wrong in your own words and what you will do
-          differently. Entries come back when the same mistake does — that
-          repeat is the thing worth watching, not the count of errors.
-        </p>
-        <p className="mt-3 text-sm text-slate">
-          <span className="num text-ink">{entries.length}</span> entries ·{" "}
-          <span className="num text-ink">{recurringCount}</span> came back.
-        </p>
-      </section>
+    <Page width="wide">
+      <SegmentedNav items={REVIEW_TABS} />
 
-      <JournalForm attempts={open} preselected={attempt ?? null} />
+      <PageHeader
+        eyebrow="Review"
+        title="Your mistakes, in your own words."
+        lead="After a wrong answer, write what you were actually thinking and one thing you will do differently. An entry comes back when the same misconception does — that repeat is the thing worth watching, not the number of errors."
+      />
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-display text-xl font-extrabold">Past entries</h2>
+      <div className="stagger grid gap-3 sm:grid-cols-3 sm:gap-4">
+        <Stat
+          icon="journal"
+          label="Entries written"
+          value={entries.length}
+          hint="Every one written by you. Nothing here is generated — an explanation you did not produce tests nothing."
+        />
+        <Stat
+          icon="rotate"
+          label="Came back"
+          value={recurringCount}
+          tone={recurringCount > 0 ? "brand" : "default"}
+          hint="Entries whose misconception showed up again. These are the ones worth rereading before your next session."
+        />
+        <Stat
+          icon="clock"
+          label="Waiting to write up"
+          value={open.length}
+          hint="Recent wrong answers with no entry yet. Writing one is easiest while you still remember what you were thinking."
+        />
+      </div>
+
+      <WhyThis k="errorJournal" className="mt-4" />
+
+      <Section
+        title="New entry"
+        description="Two questions. Both answered in your words, not the app's."
+      >
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <JournalForm attempts={open} preselected={attempt ?? null} />
+          </div>
+          <Well>
+            <p className="t-eyebrow">What happens to it</p>
+            <ul className="mt-2.5 flex flex-col gap-2.5 text-sm leading-relaxed text-text-2">
+              <li className="flex gap-2.5">
+                <Icon
+                  name="check"
+                  size={15}
+                  className="mt-0.5 shrink-0 text-text-3"
+                />
+                It is tagged with the misconception behind the wrong answer.
+              </li>
+              <li className="flex gap-2.5">
+                <Icon
+                  name="rotate"
+                  size={15}
+                  className="mt-0.5 shrink-0 text-text-3"
+                />
+                If the same misconception appears again, the entry is marked as
+                having come back and moves to the top of this page.
+              </li>
+              <li className="flex gap-2.5">
+                <Icon
+                  name="lock"
+                  size={15}
+                  className="mt-0.5 shrink-0 text-text-3"
+                />
+                Nobody else sees it. It is not scored and it costs no XP to get
+                one wrong.
+              </li>
+            </ul>
+          </Well>
+        </div>
+      </Section>
+
+      <Section
+        title="Past entries"
+        description={
+          ordered.length > 0
+            ? "Entries whose mistake came back are listed first."
+            : undefined
+        }
+      >
         {ordered.length === 0 ? (
-          <p className="plane p-5 text-sm text-slate">
-            Nothing written yet. The first entry usually comes right after a
-            wrong answer, while you still remember what you were thinking.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {ordered.map((entry) => (
-              <li key={entry.id} className="plane p-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  {recurring(entry) && (
-                    <span className="plane-sm bg-gold px-2 py-1 text-xs font-semibold">
-                      Came back
-                      {entry.tagCount > 1 ? (
-                        <>
-                          {" "}
-                          <span className="num">{entry.tagCount}×</span>
-                        </>
-                      ) : null}
-                    </span>
+          <Card>
+            <div className="flex items-start gap-3.5">
+              <span className="grid size-10 shrink-0 place-items-center rounded-[var(--r-md)] bg-raised text-text-3">
+                <Icon name="journal" size={19} />
+              </span>
+              <div>
+                <p className="font-display text-base font-bold">
+                  Nothing written yet.
+                </p>
+                <p className="mt-1.5 max-w-[58ch] text-sm leading-relaxed text-text-2">
+                  This page is where a wrong answer turns into something you can
+                  study. The first entry usually comes right after a session,
+                  while you still remember the reasoning that led you astray —
+                  {open.length > 0 ? (
+                    <>
+                      {" "}
+                      and you already have{" "}
+                      <span className="num text-text">{open.length}</span> answer
+                      {open.length === 1 ? "" : "s"} above waiting to be written
+                      up.
+                    </>
+                  ) : (
+                    " so do a session and come back the moment you get one wrong."
                   )}
-                  {entry.tag && (
-                    <span className="plane-sm px-2 py-1 text-xs">{entry.tag}</span>
-                  )}
-                  {entry.createdAt && (
-                    <span className="num text-xs text-slate">
-                      {entry.createdAt.slice(0, 10)}
-                    </span>
-                  )}
-                </div>
-
-                {entry.stem && (
-                  <p className="mt-3 font-semibold leading-snug"><MathText text={entry.stem} /></p>
+                </p>
+                {open.length === 0 && (
+                  <Link
+                    href="/today"
+                    className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold underline decoration-dotted underline-offset-4 hover:text-brand"
+                  >
+                    Start today&apos;s five
+                    <Icon name="arrowRight" size={15} />
+                  </Link>
                 )}
-
-                <dl className="mt-3 flex flex-col gap-3 text-sm">
-                  <div>
-                    <dt className="font-semibold">What went wrong</dt>
-                    <dd className="mt-0.5 whitespace-pre-wrap text-slate">
-                      {entry.whatWentWrong}
-                    </dd>
+              </div>
+            </div>
+          </Card>
+        ) : (
+          <ul className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {ordered.map((entry) => (
+              <li key={entry.id}>
+                <Card className="flex h-full flex-col">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {recurring(entry) && (
+                      <Badge tone="gold" icon="rotate">
+                        Came back
+                        {entry.tagCount > 1 ? (
+                          <>
+                            {" "}
+                            <span className="num">{entry.tagCount}×</span>
+                          </>
+                        ) : null}
+                      </Badge>
+                    )}
+                    {entry.tag && <Badge tone="neutral">{entry.tag}</Badge>}
+                    {entry.createdAt && (
+                      <span className="num ml-auto text-xs text-text-3">
+                        {entry.createdAt.slice(0, 10)}
+                      </span>
+                    )}
                   </div>
-                  {entry.whatToDoNext && (
+
+                  {entry.stem && (
+                    <p className="mt-3.5 font-semibold leading-snug">
+                      <MathText text={entry.stem} />
+                    </p>
+                  )}
+
+                  <dl className="mt-3.5 flex flex-col gap-3 text-sm">
                     <div>
-                      <dt className="font-semibold">What to do next</dt>
-                      <dd className="mt-0.5 whitespace-pre-wrap text-slate">
-                        {entry.whatToDoNext}
+                      <dt className="t-eyebrow">What went wrong</dt>
+                      <dd className="mt-1 whitespace-pre-wrap leading-relaxed text-text-2">
+                        {entry.whatWentWrong}
                       </dd>
                     </div>
-                  )}
-                </dl>
+                    {entry.whatToDoNext && (
+                      <div>
+                        <dt className="t-eyebrow">What to do next</dt>
+                        <dd className="mt-1 whitespace-pre-wrap leading-relaxed text-text-2">
+                          {entry.whatToDoNext}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
 
-                {entry.revisitedAt && (
-                  <p className="mt-3 text-xs text-slate">
-                    Last revisited{" "}
-                    <span className="num">{entry.revisitedAt.slice(0, 10)}</span>
-                  </p>
-                )}
+                  {entry.revisitedAt && (
+                    <p className="mt-auto pt-4 text-xs text-text-3">
+                      Last revisited{" "}
+                      <span className="num">
+                        {entry.revisitedAt.slice(0, 10)}
+                      </span>
+                    </p>
+                  )}
+                </Card>
               </li>
             ))}
           </ul>
         )}
-      </section>
-    </div>
+      </Section>
+    </Page>
   );
 }

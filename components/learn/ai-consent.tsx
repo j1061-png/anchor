@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -8,29 +8,103 @@ import { Button } from "@/components/ui/button";
 // (App Store guideline 5.1.2(i)). Until agreed, the hint ladder and tutor are
 // replaced by this card; grading and the worked solution never need consent
 // because they are deterministic and stay on the server.
+//
+// The answer is stored on the profile and read by every model call in
+// `/api/learn` (see `lib/ai-consent.ts`). localStorage is kept as a cache so the
+// learn screen can render the right thing on the first paint instead of
+// flickering, but it decides nothing: the server ignores it, and the reconcile
+// below lets the server correct it — which is what makes consent revoked on one
+// device take effect on another.
+
 const STORAGE_KEY = "anchor-ai-consent-v1";
 
-export function useAiConsent(): [boolean | null, () => void] {
-  const [consented, setConsented] = useState<boolean | null>(null);
-  useEffect(() => {
-    try {
-      setConsented(window.localStorage.getItem(STORAGE_KEY) === "yes");
-    } catch {
-      setConsented(false);
-    }
-  }, []);
-  const agree = () => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, "yes");
-    } catch {
-      // Consent still applies for this visit.
-    }
-    setConsented(true);
-  };
-  return [consented, agree];
+function readCache(): boolean | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    return raw === "yes" ? true : raw === "no" ? false : null;
+  } catch {
+    return null;
+  }
 }
 
-export function AiConsentCard({ onAgree }: { onAgree: () => void }) {
+/**
+ * Updates the first-paint cache. Exported so the profile toggle can keep it in
+ * step: turning AI off there must not leave the learn screen rendering the hint
+ * ladder until its next fetch. It is a cache and nothing else — the server has
+ * already been told before this is called.
+ */
+export function cacheAiConsent(granted: boolean) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, granted ? "yes" : "no");
+  } catch {
+    // A blocked store costs a round trip on the next load, nothing more.
+  }
+}
+
+/**
+ * `[granted, grant]`. `granted` is null only while the first paint is still
+ * undecided. `grant` resolves once the server has recorded it and throws if it
+ * did not, so the caller never shows AI as enabled on a write that failed.
+ */
+export function useAiConsent(): [boolean | null, () => Promise<void>] {
+  const [granted, setGranted] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setGranted(readCache() ?? false);
+
+    let live = true;
+    (async () => {
+      try {
+        const res = await fetch("/api/consent", { cache: "no-store" });
+        if (!res.ok) return;
+        const body = (await res.json()) as { granted?: boolean };
+        if (!live || typeof body.granted !== "boolean") return;
+        cacheAiConsent(body.granted);
+        setGranted(body.granted);
+      } catch {
+        // Offline: the cache stands for this visit and the server still
+        // enforces the truth on every request.
+      }
+    })();
+
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  const grant = useCallback(async () => {
+    const res = await fetch("/api/consent", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ granted: true }),
+    });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(body?.error ?? "That didn't save. Try again.");
+    }
+    cacheAiConsent(true);
+    setGranted(true);
+  }, []);
+
+  return [granted, grant];
+}
+
+export function AiConsentCard({ onAgree }: { onAgree: () => void | Promise<void> }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function agree() {
+    setSaving(true);
+    setError(null);
+    try {
+      await onAgree();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "That didn't save. Try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <section className="plane p-5" aria-label="AI tutor consent">
       <h2 className="font-display text-xl font-extrabold tracking-tight">
@@ -45,13 +119,19 @@ export function AiConsentCard({ onAgree }: { onAgree: () => void }) {
         <Link className="underline" href="/privacy">privacy policy</Link>.
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button type="button" className="min-h-11" onClick={onAgree}>
-          I understand — enable AI hints
+        <Button type="button" className="min-h-11" loading={saving} onClick={agree}>
+          {saving ? "Saving…" : "I understand — enable AI hints"}
         </Button>
       </div>
+      {error ? (
+        <p className="mt-2 text-sm text-flag" role="alert">
+          {error}
+        </p>
+      ) : null}
       <p className="mt-2 text-xs text-slate">
         Don&apos;t want AI involved? Keep attempting and use the worked
-        solution after real work — everything else works without it.
+        solution after real work — everything else works without it. You can
+        turn this off again later in Profile → Settings.
       </p>
     </section>
   );

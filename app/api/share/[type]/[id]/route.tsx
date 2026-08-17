@@ -2,12 +2,26 @@
 // inlined because satori has no CSS variables. Text renders in the og default
 // face (Noto Sans): pulling Google fonts into satori at request time is flaky,
 // so the cards trade the app's type stack for reliability.
+//
+// Privacy: a card is public by definition — anyone with the URL can fetch it,
+// and the middleware matcher lets /api/share through unauthenticated. So every
+// card type gates on profiles.leaderboard_opt_in, the opt-IN column added by
+// 20260805000100_leaderboards.sql. The older public_leaderboard column defaults
+// TRUE, so gating on it published cards for users who never agreed to anything.
 
 import { ImageResponse } from "next/og";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ACHIEVEMENTS } from "@/lib/achievements";
+import {
+  RANGE_LABEL,
+  parseRange,
+  type ProgressStats,
+  type ShareRange,
+} from "@/lib/share";
+import { loadProgressStats } from "@/lib/share-stats";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const PAPER = "#e4e7dc";
 const INK = "#16190f";
@@ -19,15 +33,28 @@ const GRID = "rgba(22,25,15,0.08)";
 
 const SIZE = 1080;
 
+/**
+ * Cache policy. Rendering a 1080² image is the most expensive thing this app
+ * does per request, so anything whose content can never change again is cached
+ * at the edge for a year; anything that moves with the user is cached briefly
+ * and served stale while it revalidates.
+ */
+const CACHE_IMMUTABLE =
+  "public, max-age=86400, s-maxage=31536000, immutable";
+const CACHE_LIVE =
+  "public, max-age=300, s-maxage=900, stale-while-revalidate=86400";
+
 const paramsSchema = z.object({
-  type: z.enum(["score", "streak", "achievement"]),
+  type: z.enum(["score", "streak", "achievement", "progress"]),
   id: z.string().uuid(),
 });
 
+// Never cached: a 404 here usually means "has not opted in yet", and that
+// should stop being true the moment they do.
 const notFound = () =>
   NextResponse.json(
     { error: "No share card at that address. Check the link." },
-    { status: 404 },
+    { status: 404, headers: { "cache-control": "no-store" } },
   );
 
 function fmtDate(iso: string): string {
@@ -59,7 +86,7 @@ function OgWordmark() {
   );
 }
 
-function card(children: React.ReactNode) {
+function card(children: React.ReactNode, cacheControl = CACHE_IMMUTABLE) {
   return new ImageResponse(
     (
       <div
@@ -86,13 +113,184 @@ function card(children: React.ReactNode) {
     {
       width: SIZE,
       height: SIZE,
-      headers: { "cache-control": "public, max-age=3600" },
+      headers: { "cache-control": cacheControl },
     },
   );
 }
 
+/** A bordered figure block: the number, then what the number counts. */
+function Tile({
+  value,
+  label,
+  accent = INK,
+}: {
+  value: number | string;
+  label: string;
+  accent?: string;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flexGrow: 1,
+        flexBasis: 0,
+        padding: "24px 26px",
+        borderRadius: 16,
+        backgroundColor: CHALK,
+        border: `3px solid ${INK}`,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          fontSize: 74,
+          fontWeight: 700,
+          lineHeight: 1,
+          color: accent,
+        }}
+      >
+        {value}
+      </div>
+      <div style={{ display: "flex", fontSize: 28, color: SLATE, marginTop: 12 }}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The progress card. Leads with unaided solves — the one figure that means the
+ * work was yours — then recall days, brain-only sessions and milestones. No
+ * score, no accuracy percentage, no ranking.
+ */
+function ProgressCard({
+  name,
+  range,
+  stats,
+  includeStreak,
+}: {
+  name: string;
+  range: ShareRange;
+  stats: ProgressStats;
+  includeStreak: boolean;
+}) {
+  const pct =
+    stats.finished > 0
+      ? Math.max(3, Math.round((stats.unaidedSolves / stats.finished) * 100))
+      : 0;
+
+  const tiles: React.ReactNode[] = [];
+  if (includeStreak) {
+    tiles.push(
+      <Tile
+        key="recall"
+        value={stats.recallDays}
+        label={stats.recallDays === 1 ? "day of recall" : "days of recall"}
+        accent={FLAG}
+      />,
+    );
+  }
+  if (stats.brainOnly !== null) {
+    tiles.push(
+      <Tile
+        key="brain"
+        value={stats.brainOnly}
+        label={
+          stats.brainOnly === 1 ? "brain-only session" : "brain-only sessions"
+        }
+      />,
+    );
+  }
+  tiles.push(
+    <Tile
+      key="milestones"
+      value={stats.milestones}
+      label={stats.milestones === 1 ? "milestone" : "milestones"}
+      accent={GOLD}
+    />,
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+      <div style={{ display: "flex", fontSize: 36, color: SLATE }}>
+        {name} · {RANGE_LABEL[range]}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 26,
+          marginTop: 6,
+        }}
+      >
+        {/* Every div carries an explicit display: satori throws without it,
+            and the thrown card is an unrenderable 500, not a fallback. */}
+        <div
+          style={{
+            display: "flex",
+            fontSize: 268,
+            fontWeight: 700,
+            lineHeight: 1,
+          }}
+        >
+          {stats.unaidedSolves}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", fontSize: 58, fontWeight: 700 }}>
+            solved
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 58,
+              fontWeight: 700,
+              color: FLAG,
+            }}
+          >
+            unaided
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", fontSize: 34, color: SLATE, marginTop: 10 }}>
+        {stats.finished > 0
+          ? `out of ${stats.finished} finished — no hint, no worked solution`
+          : "no items finished in this window yet"}
+      </div>
+
+      {stats.finished > 0 && (
+        <div
+          style={{
+            display: "flex",
+            width: "100%",
+            height: 26,
+            marginTop: 26,
+            borderRadius: 13,
+            backgroundColor: CHALK,
+            border: `3px solid ${INK}`,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              width: `${pct}%`,
+              height: "100%",
+              backgroundColor: FLAG,
+            }}
+          />
+        </div>
+      )}
+
+      <div style={{ display: "flex", gap: 22, marginTop: 34 }}>{tiles}</div>
+    </div>
+  );
+}
+
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ type: string; id: string }> },
 ) {
   const parsed = paramsSchema.safeParse(await params);
@@ -110,11 +308,11 @@ export async function GET(
 
     const { data: owner } = await admin
       .from("profiles")
-      .select("display_name, public_leaderboard")
+      .select("display_name, leaderboard_opt_in")
       .eq("id", session.user_id)
       .maybeSingle();
-    // Opted-out profiles do not get public cards; nothing leaks.
-    if (!owner?.public_leaderboard) return notFound();
+    // Not opted in, no public card. Nothing leaks.
+    if (!owner?.leaderboard_opt_in) return notFound();
 
     const solved = Math.round((session.accuracy ?? 0) * 5);
     return card(
@@ -130,25 +328,68 @@ export async function GET(
             marginTop: 8,
           }}
         >
-          <div style={{ fontSize: 340, fontWeight: 700, lineHeight: 1 }}>
+          <div
+            style={{
+              display: "flex",
+              fontSize: 340,
+              fontWeight: 700,
+              lineHeight: 1,
+            }}
+          >
             {session.score ?? 0}
           </div>
-          <div style={{ fontSize: 52, color: SLATE }}>score</div>
+          <div style={{ display: "flex", fontSize: 52, color: SLATE }}>
+            score
+          </div>
         </div>
         <div style={{ display: "flex", fontSize: 52, marginTop: 12 }}>
           {solved}/5 solved
         </div>
       </div>,
+      // A completed session's figures never change again.
+      CACHE_IMMUTABLE,
+    );
+  }
+
+  if (type === "progress") {
+    const { data: owner } = await admin
+      .from("profiles")
+      .select("display_name, streak_current, leaderboard_opt_in")
+      .eq("id", id)
+      .maybeSingle();
+    if (!owner?.leaderboard_opt_in) return notFound();
+
+    const search = new URL(request.url).searchParams;
+    const range = parseRange(search.get("range"));
+    // Streak is opt-out per card: the sharer chooses in the UI.
+    const includeStreak = search.get("streak") !== "0";
+
+    const stats = await loadProgressStats(
+      admin as unknown as SupabaseClient,
+      id,
+      range,
+      owner.streak_current,
+    );
+
+    return card(
+      <ProgressCard
+        name={owner.display_name ?? "An anchor player"}
+        range={range}
+        stats={stats}
+        includeStreak={includeStreak}
+      />,
+      // These counts move as the user practises.
+      CACHE_LIVE,
     );
   }
 
   if (type === "streak") {
     const { data: owner } = await admin
       .from("profiles")
-      .select("display_name, streak_current, public_leaderboard")
+      .select("display_name, streak_current, leaderboard_opt_in")
       .eq("id", id)
       .maybeSingle();
-    if (!owner?.public_leaderboard) return notFound();
+    if (!owner?.leaderboard_opt_in) return notFound();
 
     const streak = owner.streak_current;
     const filled = Math.min(16, streak);
@@ -169,7 +410,7 @@ export async function GET(
             {streak}
           </div>
           <div style={{ display: "flex", fontSize: 52 }}>
-            day{streak === 1 ? "" : "s"} straight
+            day{streak === 1 ? "" : "s"} of recall practice
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -194,6 +435,8 @@ export async function GET(
           ))}
         </div>
       </div>,
+      // The streak changes daily.
+      CACHE_LIVE,
     );
   }
 
@@ -207,10 +450,10 @@ export async function GET(
 
   const { data: owner } = await admin
     .from("profiles")
-    .select("display_name, public_leaderboard")
+    .select("display_name, leaderboard_opt_in")
     .eq("id", row.user_id)
     .maybeSingle();
-  if (!owner?.public_leaderboard) return notFound();
+  if (!owner?.leaderboard_opt_in) return notFound();
 
   const def = ACHIEVEMENTS.find((a) => a.key === row.achievement_key);
   const name = def?.name ?? row.achievement_key.replace(/[-_]+/g, " ");
@@ -246,5 +489,7 @@ export async function GET(
         {fmtDate(row.unlocked_at.slice(0, 10))}
       </div>
     </div>,
+    // An unlock is a fact about a past date; it will not change.
+    CACHE_IMMUTABLE,
   );
 }

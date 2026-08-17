@@ -3,7 +3,9 @@
   "configurations": [
     {
       "name": "anchor",
-      "url": "http://localhost:5730"
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5730"],
+      "port": 5730
     }
   ]
 }

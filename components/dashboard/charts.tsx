@@ -1,15 +1,24 @@
 "use client";
 
-// Dashboard charts. Recharts, styled from the token palette only: ink for
-// the data, slate for chrome, flag for the live emphasis, gold for rewards.
-// Single-series charts throughout — identity never rides on color alone.
+// Dashboard charts. Recharts, coloured only from the token palette — the
+// values are CSS variables written straight into SVG presentation attributes,
+// so both themes work and no hex is hard-coded anywhere.
+//
+// Two layout bugs fixed here:
+//   • CategoryBars truncated six labels to 7 characters at 9px with
+//     interval={0} inside a half-width card, which collided on a 390px screen.
+//     It is now a horizontal bar chart with a real label gutter, so the full
+//     category name is readable at any width.
+//   • CategoryRadar clipped its six outer labels at outerRadius="70%" in a
+//     264px box. The plot is smaller, the box is taller, and two-word labels
+//     wrap onto two lines instead of running off the edge.
+//
+// ScoreSparkline and ScoreOverTime used to live here. They rendered a composite
+// score that R1 retired, nothing imported them, and they have been deleted.
 
-import { useState } from "react";
 import {
   Bar,
   BarChart,
-  Line,
-  LineChart,
   PolarAngleAxis,
   PolarGrid,
   Radar,
@@ -21,11 +30,10 @@ import {
 } from "recharts";
 import { CATEGORY_LABELS, type Category } from "@/lib/types";
 
-const INK = "#16190f";
-const SLATE = "#5d6852";
-const FLAG = "#e01b54";
+const AXIS = "var(--text-3)";
+const GRID = "var(--line-strong)";
 
-function PlaneTooltip({
+function ChartTooltip({
   active,
   payload,
   label,
@@ -38,9 +46,9 @@ function PlaneTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="plane-sm px-2.5 py-1.5 text-xs">
-      {label !== undefined && <p className="text-slate">{label}</p>}
-      <p className="num">
+    <div className="rounded-[var(--r-sm)] border border-[var(--line)] bg-surface px-2.5 py-1.5 text-xs shadow-[var(--shadow-md)]">
+      {label !== undefined && <p className="text-text-2">{label}</p>}
+      <p className="num font-semibold">
         {payload[0].value}
         {unit ?? ""}
       </p>
@@ -48,28 +56,33 @@ function PlaneTooltip({
   );
 }
 
-// Tiny trend line for the hero score. No axes, no grid.
-export function ScoreSparkline({
-  points,
-}: {
-  points: { date: string; score: number }[];
+/**
+ * Radar tick that wraps a two-word category onto two lines. Six labels around a
+ * 264px plot ran off the edge as one line each.
+ */
+function WrappedAngleTick(props: {
+  x?: number;
+  y?: number;
+  textAnchor?: "start" | "middle" | "end" | "inherit";
+  payload?: { value?: string };
 }) {
-  if (points.length < 2) return null;
+  const { x = 0, y = 0, textAnchor = "middle", payload } = props;
+  const words = String(payload?.value ?? "").split(" ");
   return (
-    <div className="h-10 w-28" aria-hidden>
-      <ResponsiveContainer>
-        <LineChart data={points} margin={{ top: 4, right: 2, bottom: 2, left: 2 }}>
-          <Line
-            type="monotone"
-            dataKey="score"
-            stroke={FLAG}
-            strokeWidth={2}
-            dot={false}
-            isAnimationActive={false}
-          />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <text
+      x={x}
+      y={y}
+      textAnchor={textAnchor}
+      fill={AXIS}
+      fontSize={11}
+      dominantBaseline="central"
+    >
+      {words.map((word, i) => (
+        <tspan key={i} x={x} dy={i === 0 ? (words.length > 1 ? -5 : 0) : 12}>
+          {word}
+        </tspan>
+      ))}
+    </text>
   );
 }
 
@@ -82,153 +95,112 @@ export function CategoryRadar({
     label: CATEGORY_LABELS[r.category],
     rating: r.rating,
   }));
-  const min = Math.min(...ratings.map((r) => r.rating));
-  const max = Math.max(...ratings.map((r) => r.rating));
+
+  if (data.length === 0) {
+    return (
+      <p className="text-sm text-text-2">
+        Ratings appear here once you have played a puzzle in a category.
+      </p>
+    );
+  }
+
+  // Math.min/max spread over an empty array yields Infinity/-Infinity, which
+  // used to be read out to screen readers as "range Infinity to -Infinity".
+  const values = ratings.map((r) => r.rating);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+
   return (
-    <div className="h-64 w-full" role="img" aria-label="rating by category">
-      <ResponsiveContainer>
-        <RadarChart data={data} outerRadius="70%">
-          <PolarGrid stroke={SLATE} strokeOpacity={0.3} />
-          <PolarAngleAxis
-            dataKey="label"
-            tick={{ fill: SLATE, fontSize: 11 }}
-          />
-          <Radar
-            dataKey="rating"
-            stroke={FLAG}
-            strokeWidth={2}
-            fill={FLAG}
-            fillOpacity={0.15}
-            isAnimationActive={false}
-          />
-          <Tooltip content={<PlaneTooltip />} />
-        </RadarChart>
-      </ResponsiveContainer>
+    <div>
+      <div
+        className="h-72 w-full sm:h-80"
+        role="img"
+        aria-label="rating by category"
+      >
+        <ResponsiveContainer>
+          <RadarChart data={data} outerRadius="62%" margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+            <PolarGrid stroke={GRID} />
+            <PolarAngleAxis dataKey="label" tick={<WrappedAngleTick />} />
+            <Radar
+              dataKey="rating"
+              stroke="var(--brand)"
+              strokeWidth={2}
+              fill="var(--brand)"
+              fillOpacity={0.15}
+              isAnimationActive={false}
+            />
+            <Tooltip content={<ChartTooltip />} />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
       <p className="sr-only">
-        {data.map((d) => `${d.label} ${d.rating}`).join(", ")}; range {min} to {max}
+        {data.map((d) => `${d.label} ${d.rating}`).join(", ")}; range {min} to{" "}
+        {max}
       </p>
     </div>
   );
 }
 
-const RANGES = [
-  { key: "30d", days: 30 },
-  { key: "90d", days: 90 },
-  { key: "all", days: Infinity },
-] as const;
+const TONES: Record<string, string> = {
+  green: "var(--green)",
+  amber: "var(--amber)",
+  cobalt: "var(--cobalt)",
+};
 
-export function ScoreOverTime({
-  points,
-}: {
-  points: { date: string; score: number }[];
-}) {
-  const [range, setRange] = useState<(typeof RANGES)[number]["key"]>("90d");
-  const days = RANGES.find((r) => r.key === range)!.days;
-  const cutoff = Date.now() - days * 86_400_000;
-  const visible =
-    days === Infinity
-      ? points
-      : points.filter((p) => new Date(p.date).getTime() >= cutoff);
-
-  return (
-    <div>
-      <div role="radiogroup" aria-label="time range" className="flex gap-2">
-        {RANGES.map((r) => (
-          <button
-            key={r.key}
-            role="radio"
-            aria-checked={range === r.key}
-            onClick={() => setRange(r.key)}
-            className={`num rounded-full border px-3 py-1 text-xs ${
-              range === r.key
-                ? "border-ink bg-ink text-chalk"
-                : "border-slate/50 text-slate hover:border-ink hover:text-ink"
-            }`}
-          >
-            {r.key}
-          </button>
-        ))}
-      </div>
-      <div className="mt-3 h-48 w-full">
-        {visible.length < 2 ? (
-          <p className="pt-8 text-center text-sm text-slate">
-            Play a few sessions and the line draws itself.
-          </p>
-        ) : (
-          <ResponsiveContainer>
-            <LineChart
-              data={visible}
-              margin={{ top: 8, right: 8, bottom: 0, left: -18 }}
-            >
-              <XAxis
-                dataKey="date"
-                tick={{ fill: SLATE, fontSize: 11 }}
-                tickLine={false}
-                axisLine={{ stroke: SLATE, strokeOpacity: 0.3 }}
-                minTickGap={40}
-                tickFormatter={(d: string) => d.slice(5)}
-              />
-              <YAxis
-                tick={{ fill: SLATE, fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-                width={46}
-                domain={["dataMin - 20", "dataMax + 20"]}
-              />
-              <Tooltip content={<PlaneTooltip />} />
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke={INK}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, fill: FLAG, stroke: "none" }}
-                isAnimationActive={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Per-category percentage bars, one hue — same measure across categories.
+/**
+ * Per-category percentage bars, one hue — the same measure across categories,
+ * so identity never rides on colour. Horizontal, because six category names do
+ * not fit under a chart half a phone wide.
+ */
 export function CategoryBars({
   rows,
-  hue = "ink",
+  tone = "cobalt",
 }: {
   rows: { category: Category; value: number }[];
-  hue?: "ink" | "gold";
+  tone?: "green" | "amber" | "cobalt";
 }) {
   const data = rows.map((r) => ({
-    label: CATEGORY_LABELS[r.category].slice(0, 7),
+    label: CATEGORY_LABELS[r.category],
     value: Math.round(r.value),
   }));
+
+  if (data.length === 0) return null;
+
   return (
-    <div className="h-32 w-full">
+    <div style={{ height: Math.max(96, data.length * 30 + 24) }} className="w-full">
       <ResponsiveContainer>
-        <BarChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: -28 }}>
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 4, right: 12, bottom: 0, left: 0 }}
+        >
           <XAxis
-            dataKey="label"
-            tick={{ fill: SLATE, fontSize: 9 }}
+            type="number"
+            domain={[0, 100]}
+            ticks={[0, 50, 100]}
+            tick={{ fill: AXIS, fontSize: 10 }}
             tickLine={false}
-            axisLine={{ stroke: SLATE, strokeOpacity: 0.3 }}
-            interval={0}
+            axisLine={{ stroke: GRID }}
+            tickFormatter={(v: number) => `${v}%`}
           />
           <YAxis
-            domain={[0, 100]}
-            tick={{ fill: SLATE, fontSize: 9 }}
+            type="category"
+            dataKey="label"
+            width={104}
+            tick={{ fill: AXIS, fontSize: 11 }}
             tickLine={false}
             axisLine={false}
-            ticks={[0, 50, 100]}
+            interval={0}
           />
-          <Tooltip content={<PlaneTooltip unit="%" />} cursor={{ fill: SLATE, fillOpacity: 0.08 }} />
+          <Tooltip
+            content={<ChartTooltip unit="%" />}
+            cursor={{ fill: "var(--text-3)", fillOpacity: 0.08 }}
+          />
           <Bar
             dataKey="value"
-            fill={hue === "gold" ? "#f0b429" : INK}
-            radius={[4, 4, 0, 0]}
-            maxBarSize={22}
+            fill={TONES[tone]}
+            radius={[0, 4, 4, 0]}
+            maxBarSize={14}
             isAnimationActive={false}
           />
         </BarChart>

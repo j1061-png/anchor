@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { gradeAnswer, type AnswerKey, type GradableItem } from "@/lib/research/grader";
 import { diagnoseAttempt } from "@/lib/research/tutor";
+import { hasAiConsent } from "@/lib/ai-consent";
 import { broke, fail, write } from "../_lib/db";
 import {
   buildState,
@@ -31,6 +32,12 @@ import {
 // against the verified key (I3, I6): no model is asked whether the student is
 // right, here or anywhere else. The model is used afterwards, and only to name
 // what the working suggests went wrong (C3, B3).
+//
+// That afterwards is the only part of this route that touches the AI provider,
+// and it is the one that used to send a student's working whether or not they
+// had agreed to it. It now sits behind `hasAiConsent` (see `diagnose` below).
+// Grading does not: a student who declines AI is still marked, still scored and
+// still earns XP, because none of that has ever needed a model.
 //
 // Recorded on the way through: the step itself (B2), the confidence stated
 // before the first submission (H1), whether the student went again after an
@@ -215,6 +222,10 @@ interface AttemptFeedback {
  *
  * Filler gets a fixed line and no model call: a hint dressed as a diagnosis
  * would be exactly the payoff the gate exists to remove (B7, X2).
+ *
+ * Guideline 5.1.2(i): without consent the working is not sent anywhere, so
+ * there is no diagnosis. The student sees the graded outcome and the ladder
+ * copy, exactly as they would on an item with no misconceptions recorded.
  */
 async function diagnose(
   ctx: LearnContext,
@@ -231,6 +242,10 @@ async function diagnose(
   if (outcome !== "incorrect" && outcome !== "partial") return null;
   if (ctx.attempt.mode === "brain_only" || ctx.policy.maxHelp === "none") return null;
   if (ctx.attemptsCounted < ctx.policy.attemptsBeforeHelp) return null;
+
+  // The consent gate, read from the profile and never from the request. This is
+  // the last thing checked before the only model call on this route.
+  if (!(await hasAiConsent(ctx.userId))) return null;
 
   const result = await diagnoseAttempt({
     item: toTutorItem(ctx.item),

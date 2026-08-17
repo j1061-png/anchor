@@ -3,79 +3,70 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Wordmark } from "@/components/wordmark";
-import { BlockMeter } from "@/components/ui/think-timer";
+import { Icon, type IconName } from "@/components/ui/icon";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
-// Small geometric glyphs in currentColor. The block motif, not icon fonts.
-function GridIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="size-5" aria-hidden fill="currentColor">
-      <rect x="2.5" y="2.5" width="6.5" height="6.5" rx="1" />
-      <rect x="11" y="2.5" width="6.5" height="6.5" rx="1" />
-      <rect x="2.5" y="11" width="6.5" height="6.5" rx="1" />
-      <rect x="11" y="11" width="6.5" height="6.5" rx="1" />
-    </svg>
-  );
-}
+/**
+ * Five destinations, two surfaces.
+ *
+ * The old nav had twelve links spread over five surfaces, with labels that
+ * disagreed with their routes ("Progress" → /independence, "Skill ratings" →
+ * /dashboard). Sub-pages now live under the tab they belong to and appear as
+ * a SegmentedNav inside that section, so the global chrome stays at five.
+ */
+type Tab = {
+  href: string;
+  label: string;
+  icon: IconName;
+  /** Any route beginning with one of these highlights this tab. */
+  owns: string[];
+  /** Shown under the label on desktop hover — what the tab is for. */
+  blurb: string;
+};
 
-// A single filled block over an outline — the attempt-first "think first" mark.
-function AttemptIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="size-5" aria-hidden fill="currentColor">
-      <rect x="3" y="3" width="14" height="14" rx="1.5" opacity="0.28" />
-      <rect x="3" y="10" width="7" height="7" rx="1" />
-    </svg>
-  );
-}
-
-// Stacked cards — the spaced-review pile.
-function ReviewIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="size-5" aria-hidden fill="currentColor">
-      <rect x="4" y="5" width="12" height="4" rx="1" opacity="0.4" />
-      <rect x="4" y="11" width="12" height="4" rx="1" />
-    </svg>
-  );
-}
-
-function BarsIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="size-5" aria-hidden fill="currentColor">
-      <rect x="3" y="10.5" width="4" height="6.5" rx="0.5" />
-      <rect x="8" y="5" width="4" height="12" rx="0.5" />
-      <rect x="13" y="8" width="4" height="9" rx="0.5" />
-    </svg>
-  );
-}
-
-function CircleIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="size-5" aria-hidden fill="currentColor">
-      <circle cx="10" cy="10" r="7" />
-    </svg>
-  );
-}
-
-// The five primary destinations. /learn is the flagship (the attempt-first
-// engine), so it leads. /independence replaces the old composite-score
-// dashboard as the headline progress view (RESEARCH-SPEC R1).
-const PRIMARY = [
-  { href: "/learn", label: "Learn", Icon: AttemptIcon },
-  { href: "/review", label: "Review", Icon: ReviewIcon },
-  { href: "/today", label: "Today", Icon: GridIcon },
-  { href: "/independence", label: "Progress", Icon: BarsIcon },
-  { href: "/profile", label: "Profile", Icon: CircleIcon },
-] as const;
-
-// Reachable, but secondary — a scrollable strip so a phone is never crowded.
-const SECONDARY = [
-  { href: "/practice", label: "Practice" },
-  { href: "/brain-only", label: "Brain-only" },
-  { href: "/journal", label: "Error journal" },
-  { href: "/dashboard", label: "Skill ratings" },
-  { href: "/leaderboard", label: "Most improved" },
-  { href: "/about-the-evidence", label: "The evidence" },
-  { href: "/iphone", label: "iPhone mode" },
-] as const;
+export const TABS: Tab[] = [
+  {
+    href: "/today",
+    label: "Today",
+    icon: "today",
+    owns: ["/today", "/session", "/practice", "/brain-only", "/c/"],
+    blurb: "Your five puzzles and anything else due",
+  },
+  {
+    href: "/learn",
+    label: "Learn",
+    icon: "learn",
+    owns: ["/learn"],
+    blurb: "Study with the coach that will not answer for you",
+  },
+  {
+    href: "/review",
+    label: "Review",
+    icon: "review",
+    owns: ["/review", "/journal"],
+    blurb: "Bring back what has started to fade",
+  },
+  {
+    href: "/progress",
+    label: "Progress",
+    icon: "progress",
+    owns: [
+      "/progress",
+      "/independence",
+      "/dashboard",
+      "/leaderboard",
+      "/about-the-evidence",
+    ],
+    blurb: "Your timeline, independence and milestones",
+  },
+  {
+    href: "/profile",
+    label: "Profile",
+    icon: "profile",
+    owns: ["/profile"],
+    blurb: "You, your friends and your settings",
+  },
+];
 
 export interface NavProps {
   displayName: string;
@@ -83,100 +74,124 @@ export interface NavProps {
   streak: number;
 }
 
-// The bar shows the retrieval-attempt streak, not a usage streak: A7 and R4
-// are explicit that showing up is not what gets rewarded.
-function StreakCounter({ streak }: { streak: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="num text-sm font-semibold">{streak}</span>
-      <BlockMeter
-        filled={Math.min(16, streak)}
-        size="sm"
-        label={`${streak} day retrieval streak`}
-      />
-      <span className="text-xs text-slate">Retrieval days</span>
-    </div>
-  );
+function useActiveTab() {
+  const pathname = usePathname();
+  return (tab: Tab) =>
+    tab.owns.some(
+      (prefix) => pathname === prefix || pathname.startsWith(prefix),
+    );
 }
 
-function SecondaryStrip({
-  isActive,
-}: {
-  isActive: (href: string) => boolean;
-}) {
+/** Days in a row with a real retrieval attempt — not days the app was opened. */
+function StreakChip({ streak }: { streak: number }) {
+  const lit = streak > 0;
   return (
-    <nav
-      aria-label="More"
-      className="overflow-x-auto border-b border-ink/10 bg-paper/60"
+    <Link
+      href="/progress"
+      title={`${streak} day retrieval streak — days you turned up and tried to recall something`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold transition-colors ${
+        lit
+          ? "border-brand/25 bg-[var(--brand-soft)] text-brand"
+          : "border-[var(--line)] bg-raised text-text-3"
+      }`}
     >
-      <ul className="mx-auto flex w-max gap-1 px-4 py-1.5">
-        {SECONDARY.map(({ href, label }) => {
-          const active = isActive(href);
-          return (
-            <li key={href}>
-              <Link
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={`whitespace-nowrap rounded-(--radius-ctl) px-2.5 py-1 text-xs font-semibold ${
-                  active ? "bg-ink text-chalk" : "text-slate hover:text-ink"
-                }`}
-              >
-                {label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+      <Icon name="flame" size={13} />
+      <span className="num">{streak}</span>
+      <span className="sr-only">day retrieval streak</span>
+    </Link>
   );
 }
 
 export function Nav({ displayName, avatarEmoji, streak }: NavProps) {
-  const pathname = usePathname();
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = useActiveTab();
 
   return (
     <>
-      {/* Mobile: quiet top strip, wordmark + streak. */}
-      <header className="flex h-12 items-center justify-between px-4 sm:hidden">
-        <Link href="/today" aria-label="Anchor home">
-          <Wordmark />
-        </Link>
-        <StreakCounter streak={streak} />
+      {/* ---- Top bar: identity and global controls, both breakpoints ---- */}
+      <header className="glass pt-safe sticky top-0 z-40 border-b border-[var(--line)]">
+        <div className="mx-auto flex h-14 w-full max-w-[88rem] items-center gap-3 px-4 sm:h-16 sm:px-6">
+          <Link
+            href="/today"
+            aria-label="Anchor home"
+            className="shrink-0 transition-opacity hover:opacity-70"
+          >
+            <Wordmark />
+          </Link>
+
+          {/* Desktop tabs sit centre. */}
+          <nav aria-label="Primary" className="mx-auto hidden sm:block">
+            <ul className="flex items-center gap-1">
+              {TABS.map((tab) => {
+                const active = isActive(tab);
+                return (
+                  <li key={tab.href}>
+                    <Link
+                      href={tab.href}
+                      aria-current={active ? "page" : undefined}
+                      title={tab.blurb}
+                      className={`flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold transition-all duration-[130ms] ${
+                        active
+                          ? "bg-text text-canvas shadow-[var(--shadow-xs)]"
+                          : "text-text-2 hover:bg-raised hover:text-text"
+                      }`}
+                    >
+                      <Icon name={tab.icon} size={17} />
+                      {tab.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          <div className="ml-auto flex items-center gap-1.5 sm:ml-0">
+            <StreakChip streak={streak} />
+            <ThemeToggle />
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1 transition-colors hover:bg-raised sm:pr-3"
+              title="Your profile"
+            >
+              <span
+                aria-hidden
+                className="grid size-8 place-items-center rounded-full bg-raised text-base ring-1 ring-[var(--line)]"
+              >
+                {avatarEmoji ?? "🙂"}
+              </span>
+              <span className="hidden max-w-28 truncate text-sm font-semibold md:inline">
+                {displayName}
+              </span>
+            </Link>
+          </div>
+        </div>
       </header>
 
-      {/* Mobile: secondary destinations scroll horizontally under the strip. */}
-      <div className="sm:hidden">
-        <SecondaryStrip isActive={isActive} />
-      </div>
-
-      {/* Mobile: fixed bottom tab bar, five primary destinations. */}
+      {/* ---- Mobile: fixed bottom tab bar ---- */}
       <nav
         aria-label="Primary"
-        className="plane-sm fixed inset-x-3 bottom-3 z-40 sm:hidden"
+        className="bottom-safe glass fixed inset-x-3 z-40 rounded-[var(--r-lg)] border border-[var(--line)] shadow-[var(--shadow-lg)] sm:hidden"
       >
         <ul className="flex">
-          {PRIMARY.map(({ href, label, Icon }) => {
-            const active = isActive(href);
+          {TABS.map((tab) => {
+            const active = isActive(tab);
             return (
-              <li key={href} className="flex-1">
+              <li key={tab.href} className="flex-1">
                 <Link
-                  href={href}
+                  href={tab.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-14 flex-col items-center justify-center gap-0.5 py-1.5 ${
-                    active ? "text-ink" : "text-slate"
+                  className={`relative flex min-h-15 flex-col items-center justify-center gap-1 py-2 transition-colors ${
+                    active ? "text-brand" : "text-text-3"
                   }`}
                 >
-                  <span
-                    aria-hidden
-                    className={`size-1 rounded-[1px] ${
-                      active ? "bg-flag" : "bg-transparent"
-                    }`}
-                  />
-                  <Icon />
-                  <span className="text-[10px] font-semibold leading-none">
-                    {label}
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute inset-x-4 top-0 h-0.5 rounded-full bg-brand"
+                    />
+                  )}
+                  <Icon name={tab.icon} size={21} />
+                  <span className="text-[0.625rem] font-bold leading-none tracking-wide">
+                    {tab.label}
                   </span>
                 </Link>
               </li>
@@ -184,64 +199,6 @@ export function Nav({ displayName, avatarEmoji, streak }: NavProps) {
           })}
         </ul>
       </nav>
-
-      {/* sm+: top bar. Wordmark left, primary tabs centre, identity right. */}
-      <header className="sticky top-0 z-40 hidden border-b border-ink bg-chalk sm:block">
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-4 px-4">
-          <Link href="/today" aria-label="Anchor home">
-            <Wordmark />
-          </Link>
-          <nav aria-label="Primary">
-            <ul className="flex items-center gap-1">
-              {PRIMARY.map(({ href, label }) => {
-                const active = isActive(href);
-                return (
-                  <li key={href}>
-                    <Link
-                      href={href}
-                      aria-current={active ? "page" : undefined}
-                      className={`flex min-h-11 items-center gap-1.5 px-3 text-sm font-semibold ${
-                        active ? "text-ink" : "text-slate hover:text-ink"
-                      }`}
-                    >
-                      <span
-                        aria-hidden
-                        className={`size-1.5 rounded-[1px] ${
-                          active ? "bg-flag" : "bg-transparent"
-                        }`}
-                      />
-                      {label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
-              {avatarEmoji ? <span aria-hidden>{avatarEmoji}</span> : null}
-              <span className="max-w-28 truncate text-sm font-semibold">
-                {displayName}
-              </span>
-            </div>
-            <StreakCounter streak={streak} />
-            <Link
-              href="/iphone"
-              aria-label="iPhone mode"
-              title="iPhone mode"
-              className="flex min-h-11 items-center gap-1 text-sm font-semibold text-slate hover:text-ink"
-            >
-              <span aria-hidden>📱</span>
-              <span className="hidden md:inline">iPhone</span>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* sm+: secondary destinations under the top bar. */}
-      <div className="sticky top-14 z-30 hidden sm:block">
-        <SecondaryStrip isActive={isActive} />
-      </div>
     </>
   );
 }

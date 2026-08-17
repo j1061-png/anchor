@@ -196,6 +196,21 @@ export async function POST(
     p_slots: slots.length,
   });
 
+  // Credit the profile as each puzzle is answered rather than only when the
+  // fifth lands. XP used to accrue on the session row and reach the profile
+  // solely at completion, so a session abandoned at 3/5 lost everything the
+  // student had earned. award_xp accumulates onto a single ledger row per
+  // session, so crediting per attempt cannot double-pay.
+  if (xp > 0) {
+    await admin.rpc("award_xp", {
+      p_user_id: user.id,
+      p_amount: xp,
+      p_reason_key: "puzzleSession",
+      p_source_kind: "session",
+      p_source_id: session.id,
+    });
+  }
+
   const sessionComplete = claimedCompletion === true;
   if (sessionComplete) {
     const { data: fresh } = await admin
@@ -261,9 +276,9 @@ async function completeSession(args: {
     ratings.map((r) => ({ rating: r.rating, updated_at: r.updated_at })),
   );
 
+  // XP is credited per attempt through award_xp now, so completion must not
+  // add it a second time. It still owns the streak and the derived score.
   const profileUpdate: Partial<typeof profile> = {
-    xp: profile.xp + xpEarned,
-    level: levelForXp(profile.xp + xpEarned),
     cognitive_score: newCognitive,
   };
 

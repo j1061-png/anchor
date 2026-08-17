@@ -1,11 +1,16 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { localDate } from "@/lib/streak";
 import { PUZZLE_LABELS, type SessionSlot } from "@/lib/types";
-import { BlockMeter } from "@/components/ui/think-timer";
+import { Page, Section } from "@/components/ui/page";
+import { Card } from "@/components/ui/card";
+import { Icon, type IconName } from "@/components/ui/icon";
+import { Badge } from "@/components/ui/badge";
+import { ProgressBar } from "@/components/ui/progress";
+import { WhyThis } from "@/components/ui/why-this";
 import { StartSessionButton } from "./start-button";
 import { MidnightCountdown } from "./countdown";
 import { ChallengeCta } from "@/components/share/challenge-cta";
-import Link from "next/link";
 
 export const metadata = { title: "Today" };
 
@@ -14,7 +19,7 @@ export default async function TodayPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null; // middleware guards this
+  if (!user) return null; // the shell redirects
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -31,140 +36,294 @@ export default async function TodayPage() {
     .eq("date", today)
     .maybeSingle();
 
-  const { count: answered } = session
-    ? await supabase
-        .from("attempts")
+  // `reviews` belongs to the research schema, which the hand-written Database
+  // types predate; cast rather than block the page on regenerating them.
+  const research = supabase as unknown as {
+    from: (t: string) => {
+      select: (
+        c: string,
+        o: { count: "exact"; head: true },
+      ) => {
+        eq: (
+          col: string,
+          v: string,
+        ) => {
+          lte: (col: string, v: string) => Promise<{ count: number | null }>;
+        };
+      };
+    };
+  };
+
+  // A missing reviews table must not take the home page down with it.
+  const dueReviews = (async () => {
+    try {
+      const { count } = await research
+        .from("reviews")
         .select("id", { count: "exact", head: true })
-        .eq("session_id", session.id)
-    : { count: 0 };
+        .eq("user_id", user.id)
+        .lte("due_on", today);
+      return count ?? 0;
+    } catch {
+      return 0;
+    }
+  })();
+
+  const [{ count: answered }, dueCount] = await Promise.all([
+    session
+      ? supabase
+          .from("attempts")
+          .select("id", { count: "exact", head: true })
+          .eq("session_id", session.id)
+      : Promise.resolve({ count: 0 }),
+    dueReviews,
+  ]);
 
   const firstName = profile?.display_name?.split(" ")[0] ?? "you";
+  const done = answered ?? 0;
+  const due = dueCount;
+  const streak = profile?.streak_current ?? 0;
+  const freezes = profile?.streak_freezes ?? 0;
+  const status = session?.status ?? "not_started";
+  const slots = (session?.puzzle_seeds as SessionSlot[] | null) ?? [];
 
-  if (!session) {
-    return (
-      <div className="flex flex-col gap-6">
-        <section className="plane p-6">
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">
-            Today&apos;s five.
-          </h1>
-          <p className="mt-2 max-w-sm text-slate">
-            Five puzzles picked for where you are weakest, {firstName}. No help
-            for the first 45 seconds of each.
-          </p>
-          <div className="mt-5">
-            <StartSessionButton label="Start session" />
-          </div>
-        </section>
-        <StreakCard
-          streak={profile?.streak_current ?? 0}
-          freezes={profile?.streak_freezes ?? 0}
-        />
-        <ChallengeCta friendCode={profile?.friend_code} />
-      </div>
-    );
-  }
-
-  if (session.status === "in_progress") {
-    const slots = session.puzzle_seeds as SessionSlot[];
-    return (
-      <div className="flex flex-col gap-6">
-        <section className="plane p-6">
-          <h1 className="font-display text-3xl font-extrabold tracking-tight">
-            Session started.
-          </h1>
-          <p className="mt-2 text-slate">
-            <span className="num text-ink">{answered ?? 0}/5</span> answered.
-            The clock only runs while a puzzle is open.
-          </p>
-          <ol className="mt-4 flex flex-wrap gap-2">
-            {slots.map((s, i) => (
-              <li
-                key={i}
-                className={`plane-sm px-3 py-1.5 text-sm ${i < (answered ?? 0) ? "opacity-50" : ""}`}
-              >
-                {PUZZLE_LABELS[s.type]}
-              </li>
-            ))}
-          </ol>
-          <div className="mt-5">
-            <StartSessionButton label="Continue session" sessionId={session.id} />
-          </div>
-        </section>
-        <StreakCard
-          streak={profile?.streak_current ?? 0}
-          freezes={profile?.streak_freezes ?? 0}
-        />
-      </div>
-    );
-  }
-
-  // Complete: recap summary + countdown, no replay.
   return (
-    <div className="flex flex-col gap-6">
-      <section className="plane p-6">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Done for today.
-        </h1>
-        <p className="mt-2 text-slate">
-          <span className="num text-ink">
-            {Math.round((session.accuracy ?? 0) * 5)}/5
-          </span>{" "}
-          solved, <span className="num text-ink">{session.xp_earned}</span> XP
-          banked.
-        </p>
-        {session.feedback && (
-          <p className="mt-3 max-w-md text-sm leading-relaxed">{session.feedback}</p>
-        )}
-        <div className="mt-4 flex items-center gap-3">
-          <Link
-            href={`/session/${session.id}`}
-            className="text-sm font-semibold underline decoration-slate underline-offset-4 hover:decoration-ink"
-          >
-            See the full recap
-          </Link>
+    <Page width="wide">
+      {/* --- The one thing to do now ------------------------------------- */}
+      <section className="rise-in relative overflow-hidden rounded-[var(--r-xl)] border border-[var(--line)] bg-surface p-6 shadow-[var(--shadow-md)] sm:p-9">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full opacity-60 blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle, color-mix(in oklab, var(--brand) 26%, transparent), transparent 70%)",
+          }}
+        />
+        <div className="relative">
+          {status === "not_started" && (
+            <>
+              <Badge tone="brand" icon="today">
+                Today&apos;s five
+              </Badge>
+              <h1 className="t-hero mt-4">
+                Ready when you are, {firstName}.
+              </h1>
+              <p className="mt-3 max-w-[46ch] text-[0.9375rem] leading-relaxed text-text-2">
+                Five puzzles picked for the categories you are weakest in. The
+                first 45 seconds of each are yours alone — no hints, no answers.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <StartSessionButton label="Start today's session" />
+                <span className="num text-sm text-text-3">
+                  about 8 minutes
+                </span>
+              </div>
+            </>
+          )}
+
+          {status === "in_progress" && (
+            <>
+              <Badge tone="amber" icon="clock">
+                In progress
+              </Badge>
+              <h1 className="t-hero mt-4">Pick up where you stopped.</h1>
+              <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
+                <span className="num font-semibold text-text">{done}/5</span>{" "}
+                answered. The clock only runs while a puzzle is open.
+              </p>
+              <div className="mt-5 max-w-md">
+                <ProgressBar value={done / 5} label={`${done} of 5 answered`} />
+              </div>
+              <ol className="mt-4 flex flex-wrap gap-2">
+                {slots.map((s, i) => (
+                  <li
+                    key={i}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                      i < done
+                        ? "border-transparent bg-raised text-text-3 line-through"
+                        : "border-[var(--line-strong)] text-text-2"
+                    }`}
+                  >
+                    {PUZZLE_LABELS[s.type]}
+                  </li>
+                ))}
+              </ol>
+              <div className="mt-6">
+                <StartSessionButton
+                  label="Continue session"
+                  sessionId={session!.id}
+                />
+              </div>
+            </>
+          )}
+
+          {status === "complete" && (
+            <>
+              <Badge tone="green" icon="check">
+                Done for today
+              </Badge>
+              <h1 className="t-hero mt-4">
+                {Math.round((session!.accuracy ?? 0) * 5)} of 5 solved.
+              </h1>
+              {session!.feedback && (
+                <p className="mt-3 max-w-[52ch] text-[0.9375rem] leading-relaxed text-text-2">
+                  {session!.feedback}
+                </p>
+              )}
+              <div className="mt-6 flex flex-wrap items-center gap-4">
+                <Link
+                  href={`/session/${session!.id}`}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold underline decoration-dotted underline-offset-4 hover:text-brand"
+                >
+                  See the full recap
+                  <Icon name="arrowRight" size={15} />
+                </Link>
+                <span className="text-sm text-text-3">
+                  Tomorrow&apos;s five in <MidnightCountdown />
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </section>
-      <section className="plane p-6">
-        <p className="text-sm text-slate">Tomorrow&apos;s five in</p>
-        <MidnightCountdown />
-      </section>
-      <ChallengeCta friendCode={profile?.friend_code} />
-      <StreakCard
-        streak={profile?.streak_current ?? 0}
-        freezes={profile?.streak_freezes ?? 0}
-      />
-    </div>
+
+      <WhyThis k="attemptFirst" className="mt-4" />
+
+      {/* --- Everything else you could do -------------------------------- */}
+      <Section
+        title="More ways to train"
+        description="All optional. Each one trains something the daily five does not."
+      >
+        <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <TrainCard
+            href="/review"
+            icon="review"
+            title="Review"
+            body="Things you solved before, brought back just as they start to fade."
+            badge={due > 0 ? `${due} due` : "Nothing due"}
+            tone={due > 0 ? "brand" : "neutral"}
+          />
+          <TrainCard
+            href="/learn"
+            icon="learn"
+            title="Learn"
+            body="Work through a problem with a coach that asks questions instead of answering."
+          />
+          <TrainCard
+            href="/brain-only"
+            icon="brainOnly"
+            title="Brain-only"
+            body="A session with no hints and no AI at all. The unaided practice that stops the skill fading."
+          />
+          <TrainCard
+            href="/practice"
+            icon="practice"
+            title="Practice"
+            body="Extra puzzles in a category you choose. Moves your ratings, worth half XP."
+          />
+          <TrainCard
+            href="/journal"
+            icon="journal"
+            title="Error journal"
+            body="Your own mistakes, written up in your words, so they become the thing you study."
+          />
+          <TrainCard
+            href="/progress"
+            icon="progress"
+            title="Progress"
+            body="Your XP timeline, independence profile and every milestone you have reached."
+          />
+        </div>
+      </Section>
+
+      {/* --- Streak + challenge ------------------------------------------ */}
+      <div className="mt-10 grid gap-4 lg:grid-cols-2">
+        <Card>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Icon name="flame" size={16} className="text-brand" />
+                <p className="t-eyebrow">Retrieval days</p>
+              </div>
+              <p className="num mt-2 text-[2.25rem] leading-none">{streak}</p>
+              <p className="mt-2 max-w-[40ch] text-sm leading-relaxed text-text-2">
+                Days in a row you actually tried to recall something.
+                {freezes > 0 && (
+                  <>
+                    {" "}
+                    <span className="num">{freezes}</span> freeze
+                    {freezes === 1 ? "" : "s"} banked.
+                  </>
+                )}
+              </p>
+              <p className="mt-1.5 text-xs text-text-3">
+                Counts attempts, not opens. Turning up is not the point.
+              </p>
+            </div>
+            <div className="hidden shrink-0 sm:block">
+              <StreakDots streak={streak} />
+            </div>
+          </div>
+          <WhyThis k="spacedReview" className="mt-4" />
+        </Card>
+
+        <ChallengeCta friendCode={profile?.friend_code} />
+      </div>
+    </Page>
   );
 }
 
-// The streak counts days you did retrieval, not days you opened the app.
-// RESEARCH-SPEC R4 and A7 are explicit: a usage streak is exactly the thing
-// that must not be rewarded, because completion-contingent rewards erode the
-// motivation the product exists to protect. So the count is tied to attempts,
-// and the copy says plainly that showing up is not the measure.
-function StreakCard({ streak, freezes }: { streak: number; freezes: number }) {
+function TrainCard({
+  href,
+  icon,
+  title,
+  body,
+  badge,
+  tone = "neutral",
+}: {
+  href: string;
+  icon: IconName;
+  title: string;
+  body: string;
+  badge?: string;
+  tone?: "brand" | "neutral";
+}) {
   return (
-    <section className="plane flex items-center justify-between p-5">
-      <div>
-        <p className="num font-display text-2xl font-extrabold">{streak}</p>
-        <p className="text-sm text-slate">
-          Days you practised recall
-          {freezes > 0 && (
-            <>
-              {" · "}
-              <span className="num">{freezes}</span> freeze{freezes === 1 ? "" : "s"} banked
-            </>
+    <Link href={href} className="group block">
+      <Card interactive className="h-full">
+        <div className="flex items-start justify-between gap-3">
+          <span className="grid size-10 place-items-center rounded-[var(--r-md)] bg-raised text-text-2 transition-colors group-hover:bg-[var(--brand-soft)] group-hover:text-brand">
+            <Icon name={icon} size={19} />
+          </span>
+          {badge && (
+            <Badge tone={tone === "brand" ? "brand" : "neutral"}>{badge}</Badge>
           )}
-        </p>
-        <p className="mt-1 text-xs text-slate">
-          Counts attempts, not opens. Turning up is not the point.
-        </p>
-      </div>
-      <BlockMeter
-        filled={Math.min(16, streak)}
-        size="md"
-        label={`${streak} days of recall practice`}
-      />
-    </section>
+        </div>
+        <h3 className="mt-3.5 font-display text-base font-bold">{title}</h3>
+        <p className="mt-1.5 text-sm leading-relaxed text-text-2">{body}</p>
+        <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-text-2 transition-colors group-hover:text-brand">
+          Open
+          <Icon
+            name="chevronRight"
+            size={14}
+            className="transition-transform group-hover:translate-x-0.5"
+          />
+        </span>
+      </Card>
+    </Link>
+  );
+}
+
+/** Sixteen cells: the meter reads as a run of days, not a bar to fill. */
+function StreakDots({ streak }: { streak: number }) {
+  const lit = Math.min(16, streak);
+  return (
+    <div className="grid grid-cols-4 gap-1.5" aria-hidden>
+      {Array.from({ length: 16 }).map((_, i) => (
+        <span
+          key={i}
+          className={`size-3 rounded-[3px] ${i < lit ? "bg-brand" : "bg-sunken"}`}
+        />
+      ))}
+    </div>
   );
 }

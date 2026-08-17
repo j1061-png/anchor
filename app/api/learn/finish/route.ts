@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { structuredFeedback, type AttemptSummary } from "@/lib/research/tutor";
 import { PROXY_DISCLAIMER, type AttemptOutcome } from "@/lib/research/types";
+import { hasAiConsent } from "@/lib/ai-consent";
 import { broke, fail, write } from "../_lib/db";
 import {
   buildState,
@@ -124,11 +125,17 @@ export async function POST(request: Request) {
     );
 
     const independence = await independenceContextFor(ctx.db, ctx.userId, ctx.supportLevel);
+    // Guideline 5.1.2(i). Without consent the final answer and the attempt
+    // chain are not sent anywhere: `structuredFeedback` takes the same road it
+    // takes with no API key and writes all five parts deterministically from the
+    // verified key and the recorded counts. Two of the five — how independently,
+    // assistance over-use — were never generated in the first place.
     const feedback = await structuredFeedback({
       item: toTutorItem(ctx.item),
       answerKey: ctx.item.answer_key,
       attempt: summarise(ctx, outcome, unaided),
       independence,
+      useModel: await hasAiConsent(ctx.userId),
     });
 
     const nextReview = await nextReviewDate(ctx.db, ctx.userId, ctx.item.id);

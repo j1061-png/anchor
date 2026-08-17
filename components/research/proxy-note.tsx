@@ -31,15 +31,15 @@ export function ProxyNote({
   if (variant === "block") {
     return (
       <p
-        className={`plane-sm bg-paper p-3 text-xs leading-relaxed text-slate ${className}`}
+        className={`well p-3.5 text-xs leading-relaxed text-text-2 ${className}`}
       >
-        <span className="font-semibold text-ink">How to read this. </span>
+        <span className="font-semibold text-text">How to read this. </span>
         {text}
       </p>
     );
   }
 
   return (
-    <p className={`text-xs leading-relaxed text-slate ${className}`}>{text}</p>
+    <p className={`text-xs leading-relaxed text-text-3 ${className}`}>{text}</p>
   );
 }

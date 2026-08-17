@@ -10,6 +10,13 @@ import {
   type LeaderboardTab,
 } from "./board";
 import { LeaderboardTabs } from "./tabs";
+import { PROGRESS_TABS } from "@/components/progress/tabs";
+import { SegmentedNav } from "@/components/ui/segmented";
+import { Page, PageHeader } from "@/components/ui/page";
+import { Card, Well } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
+import { WhyThis } from "@/components/ui/why-this";
 
 export const metadata = { title: "Most improved" };
 
@@ -64,7 +71,7 @@ export default async function LeaderboardPage({
   let errorMsg: string | null = null;
   let showProfileLink = false;
   let bandLabel: string | null = null;
-  const metricLabel = tab === "improved" ? "+pts" : tab === "friends" ? "%" : "%";
+  const metricLabel = tab === "improved" ? "+pts" : "%";
 
   if (tab !== "friends" && !optedIn) {
     // The board itself is the opt-in surface: explain, and point to profile.
@@ -102,7 +109,6 @@ export default async function LeaderboardPage({
         name: r.display_name,
         avatarEmoji: r.avatar_emoji,
         metric: r.improvement_pct,
-        streak: 0,
       }));
       if (rows.length === 0 && page === 1) {
         empty = "Nobody in your band yet. You go first.";
@@ -134,7 +140,6 @@ export default async function LeaderboardPage({
         name: r.display_name,
         avatarEmoji: r.avatar_emoji,
         metric: r.independence_pct,
-        streak: 0,
       }));
       if (rows.length === 0 && page === 1) {
         empty = "Nobody in your band yet. You go first.";
@@ -184,7 +189,6 @@ export default async function LeaderboardPage({
         name: r.display_name ?? "unnamed",
         avatarEmoji: r.avatar_emoji,
         metric: r.independence_pct ?? 0,
-        streak: 0,
       }));
     }
   }
@@ -200,59 +204,127 @@ export default async function LeaderboardPage({
         ? "Independence"
         : "Friends";
 
+  const lead =
+    tab === "improved"
+      ? "How much you moved this week, against people at your level."
+      : tab === "independence"
+        ? "How often you solved it yourself, against people at your level."
+        : "Your friends, by how much they do without help.";
+
   return (
-    <div className="flex flex-col gap-4">
-      <header>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          {heading}
-        </h1>
-        <p className="mt-1 text-sm text-slate">
-          {tab === "improved"
-            ? "How much you moved this week, against people at your level."
-            : tab === "independence"
-              ? "How often you solved it yourself, against people at your level."
-              : "Your friends, by how much they do without help."}
-        </p>
-      </header>
+    <Page width="wide">
+      <SegmentedNav items={PROGRESS_TABS} />
+
+      <PageHeader
+        eyebrow="Progress"
+        title={heading}
+        lead={lead}
+        action={
+          tab !== "friends" && bandLabel ? (
+            <Badge tone="cobalt" icon="users">
+              Your level: {bandLabel}
+            </Badge>
+          ) : undefined
+        }
+      />
 
       <LeaderboardTabs />
 
-      {tab !== "friends" && (
-        <p className="text-xs text-slate">
-          Last <span className="num">7</span> days
-          {bandLabel ? (
+      <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          {errorMsg ? (
+            <Card>
+              <div className="flex items-start gap-3">
+                <Icon name="info" size={18} className="mt-0.5 text-text-3" />
+                <p className="text-sm leading-relaxed">{errorMsg}</p>
+              </div>
+            </Card>
+          ) : empty ? (
+            <Card>
+              <p className="max-w-[52ch] text-[0.9375rem] leading-relaxed text-text-2">
+                {empty}
+              </p>
+              {showProfileLink && (
+                <Link
+                  href="/profile"
+                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold underline decoration-dotted underline-offset-4 hover:text-brand"
+                >
+                  Open your profile
+                  <Icon name="arrowRight" size={15} />
+                </Link>
+              )}
+            </Card>
+          ) : (
             <>
-              {" · "}your level: <span className="font-semibold">{bandLabel}</span>
+              <Board
+                rows={rows}
+                pinned={null}
+                meId={me.id}
+                metricLabel={metricLabel}
+              />
+              {note && (
+                <p className="mt-3 px-1 text-sm text-text-2">{note}</p>
+              )}
+              <Pager tab={tab} page={page} total={total} />
             </>
-          ) : null}
-          . No speed, no top-score board — those push people down.
-        </p>
-      )}
-
-      {errorMsg ? (
-        <section className="plane p-6">
-          <p className="text-sm">{errorMsg}</p>
-        </section>
-      ) : empty ? (
-        <section className="plane p-6">
-          <p className="max-w-sm text-sm leading-relaxed">{empty}</p>
-          {showProfileLink && (
-            <Link
-              href="/profile"
-              className="mt-3 inline-block text-sm font-semibold underline decoration-slate underline-offset-4 hover:decoration-ink"
-            >
-              Open your profile
-            </Link>
           )}
-        </section>
-      ) : (
-        <Board rows={rows} pinned={null} meId={me.id} metricLabel={metricLabel} />
-      )}
+        </div>
 
-      {!errorMsg && !empty && note && (
-        <p className="px-1 text-sm text-slate">{note}</p>
-      )}
-      {!errorMsg && !empty && <Pager tab={tab} page={page} total={total} />}
-    </div>
+        {/* The rules, beside the board rather than as a footnote under it. */}
+        <Card className="h-full lg:sticky lg:top-6">
+          <h2 className="t-section">What this board is</h2>
+          <ul className="mt-3 flex flex-col gap-3 text-sm leading-relaxed text-text-2">
+            <li className="flex gap-2.5">
+              <Icon name="clock" size={16} className="mt-0.5 shrink-0 text-text-3" />
+              <span>
+                The last <span className="num">7</span> days only. It resets, so
+                a bad week never follows you.
+              </span>
+            </li>
+            <li className="flex gap-2.5">
+              <Icon name="users" size={16} className="mt-0.5 shrink-0 text-text-3" />
+              <span>
+                You are ranked inside a skill band, against people who started
+                near where you did — not against everyone.
+              </span>
+            </li>
+            <li className="flex gap-2.5">
+              <Icon name="lock" size={16} className="mt-0.5 shrink-0 text-text-3" />
+              <span>
+                Off by default. Nobody appears here without turning it on.
+              </span>
+            </li>
+            <li className="flex gap-2.5">
+              <Icon name="close" size={16} className="mt-0.5 shrink-0 text-text-3" />
+              <span>
+                No speed board and no top-score board. Those rank people who
+                were already ahead and push everyone else down.
+              </span>
+            </li>
+          </ul>
+
+          <Well className="mt-4 text-xs leading-relaxed text-text-2">
+            {tab === "improved" ? (
+              <>
+                <span className="font-semibold text-text">+pts </span>
+                is the change in your unaided solve rate between this week and
+                last, in percentage points. Both weeks need at least{" "}
+                <span className="num">5</span> unaided items or you are left
+                off.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-text">% </span>
+                is the share of items you got right with no hint, over the last{" "}
+                <span className="num">7</span> days. It needs at least{" "}
+                <span className="num">5</span> unaided items to appear.
+              </>
+            )}
+          </Well>
+
+          <WhyThis k="sharing" className="mt-4" />
+        </Card>
+      </div>
+    </Page>
   );
 }

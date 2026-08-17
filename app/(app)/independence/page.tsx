@@ -19,6 +19,13 @@ import type { Dimension } from "@/lib/research/types";
 import { CalibrationChart } from "@/components/research/calibration-chart";
 import { DimensionCard } from "@/components/research/dimension-card";
 import { ProxyNote } from "@/components/research/proxy-note";
+import { PROGRESS_TABS } from "@/components/progress/tabs";
+import { SegmentedNav } from "@/components/ui/segmented";
+import { Page, PageHeader, Section } from "@/components/ui/page";
+import { Card, Well } from "@/components/ui/card";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { Icon } from "@/components/ui/icon";
+import { WhyThis } from "@/components/ui/why-this";
 import { RangeTabs } from "./range-tabs";
 import { parseWindow, previousPhrase, windowPhrase } from "./window";
 
@@ -32,6 +39,11 @@ import { parseWindow, previousPhrase, windowPhrase } from "./window";
 //
 // Tone is fixed by G3: state the number, attach the definition, offer a next
 // action, and never dress a figure up as a verdict on the student.
+//
+// Layout rule: the DATA leads. The page used to open with two justification
+// essays before a single number appeared. The reasoning is all still here —
+// every caveat, every interval, every sample-size floor — but it sits in
+// disclosures beside the figures it qualifies rather than in front of them.
 
 export const metadata = { title: "Independence" };
 
@@ -44,6 +56,33 @@ const dayStart = (day: string) => Date.parse(`${day}T00:00:00.000Z`);
 
 function Num({ children }: { children: ReactNode }) {
   return <span className="num">{children}</span>;
+}
+
+/** Collapsed reasoning. Open it and the full argument is there, unabridged. */
+function Disclosure({
+  summary,
+  children,
+  className = "",
+}: {
+  summary: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <details
+      className={`group rounded-[var(--r-md)] border border-[var(--line)] bg-surface ${className}`}
+    >
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+        <Icon
+          name="chevronDown"
+          size={15}
+          className="shrink-0 text-text-3 transition-transform duration-200 group-open:rotate-180"
+        />
+        {summary}
+      </summary>
+      <div className="border-t border-[var(--line)] px-4 py-4">{children}</div>
+    </details>
+  );
 }
 
 function median(values: number[]): number | null {
@@ -170,298 +209,276 @@ export default async function IndependencePage({
   const windowText = windowPhrase(days);
   const comparison = previousPhrase(days);
 
+  // Hint-reliance trend, in whole percentage points with an explicit sign.
+  // "0 pts" is a real answer — it means level with the previous window.
+  const trendPts = hintTrend === null ? null : Math.abs(Math.round(hintTrend));
+  const trendValue =
+    hintTrend === null || trendPts === null
+      ? "—"
+      : trendPts === 0
+        ? "0"
+        : `${hintTrend > 0 ? "+" : "−"}${trendPts}`;
+  const trendUnit =
+    trendPts === null ? undefined : trendPts === 1 ? "pt" : "pts";
+
   return (
-    <div className="flex flex-col gap-4">
-      <header className="flex flex-col gap-2">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Independence
-        </h1>
-        <p className="text-sm text-slate">
-          What you did inside Anchor over {windowText}: how much came out
-          unaided, how much help was used, and how well your confidence matched
-          the result. Counts and definitions, no ranking.
-        </p>
-      </header>
+    <Page width="wide">
+      <SegmentedNav items={PROGRESS_TABS} />
+
+      <PageHeader
+        eyebrow="Progress"
+        title="Independence"
+        lead={
+          <>
+            What you did inside Anchor over {windowText}: how much came out
+            unaided, how much help was used, and how well your confidence
+            matched the result. Counts and definitions, no ranking.
+          </>
+        }
+      />
 
       <RangeTabs />
 
-      {/* G1 — behavioural facts, each with the definition attached. */}
-      <section aria-labelledby="facts" className="flex flex-col gap-3">
-        <h2
-          id="facts"
-          className="font-display text-lg font-extrabold tracking-tight"
-        >
-          Behavioural facts
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Fact
-            headline={
-              todayIndependent === null ? (
-                <>No items finished today yet</>
-              ) : (
-                <>
-                  Today you solved <Num>{todayIndependent}%</Num> independently
-                </>
-              )
-            }
-            definition={
-              todayRow && todayRow.total_attempts > 0 ? (
-                <>
-                  Of the <Num>{todayRow.total_attempts}</Num> items you finished
-                  today, the share you got right with no hint and no worked
-                  solution.
-                </>
-              ) : (
-                <>
-                  This counts the items you finish today that you get right with
-                  no hint and no worked solution. Start a set and it fills in.
-                </>
-              )
-            }
-          />
-
-          <Fact
-            headline={
-              hintTrend === null ? (
-                <>Hint reliance has no comparison yet</>
-              ) : Math.abs(hintTrend) < 0.5 ? (
-                <>Hint reliance is level {windowText}</>
-              ) : (
-                <>
-                  Hint reliance {hintTrend > 0 ? "up" : "down"}{" "}
-                  <Num>{Math.abs(Math.round(hintTrend))}</Num>{" "}
-                  {Math.abs(Math.round(hintTrend)) === 1 ? "point" : "points"} over{" "}
-                  {windowText}
-                </>
-              )
-            }
-            definition={
-              hintTrend === null ? (
-                <>
-                  Hint reliance is the share of items where you asked for at least
-                  one hint. A comparison needs at least <Num>{MIN_SAMPLE}</Num>{" "}
-                  items in {windowText} and in {comparison}.
-                </>
-              ) : (
-                <>
-                  Hint reliance is the share of items where you asked for at least
-                  one hint. This is the change against {comparison}, measured in
-                  percentage points. One point is one item in a hundred, not one
-                  percent of the old figure.
-                </>
-              )
-            }
-          />
-
-          <Fact
-            headline={
-              thinkMs === null ? (
-                <>No think time recorded yet</>
-              ) : (
-                <>
-                  You think for <Num>{Math.round(thinkMs / 1000)}s</Num> before
-                  asking
-                </>
-              )
-            }
-            definition={
+      {/* G1 — behavioural facts, each with the definition attached, and M4 —
+          the dependence signal — sitting with them rather than paragraphs
+          further down. */}
+      <StatGrid className="mt-6">
+        <Stat
+          label="Independent today"
+          value={todayIndependent === null ? "—" : todayIndependent}
+          unit={todayIndependent === null ? undefined : "%"}
+          icon="brainOnly"
+          tone={todayIndependent === null ? "default" : "green"}
+          hint={
+            todayRow && todayRow.total_attempts > 0 ? (
               <>
-                Help-seeking timing: the median gap between the item appearing and
-                your first submission or first hint request, taken across the days
-                you practised in {windowText}.
+                <span className="font-semibold text-text-2">
+                  What this counts.{" "}
+                </span>
+                Of the <Num>{todayRow.total_attempts}</Num> items you finished
+                today, the share you got right with no hint and no worked
+                solution.
               </>
-            }
-          />
-        </div>
-      </section>
+            ) : (
+              <>
+                <span className="font-semibold text-text-2">
+                  What this counts.{" "}
+                </span>
+                The items you finish today that you get right with no hint and
+                no worked solution. Start a set and it fills in.
+              </>
+            )
+          }
+        />
 
-      {/* R1 / F4 — why there is no headline number. Stated where the numbers are. */}
-      <section className="plane p-5" aria-labelledby="no-score">
-        <h2
-          id="no-score"
-          className="font-display text-lg font-extrabold tracking-tight"
-        >
-          Why there is no single score
-        </h2>
-        <p className="mt-2 text-sm">
-          Anchor does not add these up. Accuracy, time taken, hint use and
-          retention are different behaviours, counted over different
-          denominators, from samples of different sizes. A composite of them is
-          not a validated construct, so one number would state a quantity no
-          evidence supports and would bury the sample size that makes each
-          figure readable in the first place.
-        </p>
-        <p className="mt-2 text-sm">
-          So you get <Num>6</Num> dimensions, each with its own interval and its
-          own count, and nothing that ranks you against anyone else.
-        </p>
-        <ProxyNote variant="block" className="mt-3">
-          Every figure below is a count of what you did in this app over{" "}
-          {windowText}.
-        </ProxyNote>
-      </section>
+        <Stat
+          label="Hint reliance trend"
+          value={trendValue}
+          unit={trendUnit}
+          icon="info"
+          hint={
+            hintTrend === null ? (
+              <>
+                <span className="font-semibold text-text-2">
+                  What this counts.{" "}
+                </span>
+                Hint reliance is the share of items where you asked for at least
+                one hint. A comparison needs at least <Num>{MIN_SAMPLE}</Num>{" "}
+                items in {windowText} and in {comparison}.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-text-2">
+                  What this counts.{" "}
+                </span>
+                Hint reliance is the share of items where you asked for at least
+                one hint. This is the change against {comparison}, measured in
+                percentage points. One point is one item in a hundred, not one
+                percent of the old figure.
+              </>
+            )
+          }
+        />
 
-      {/* M4 — the dependence signal, on its own card. */}
-      <section className="plane p-5" aria-labelledby="gap">
-        <div className="flex items-start justify-between gap-2">
-          <h2
-            id="gap"
-            className="font-display text-lg font-extrabold tracking-tight"
-          >
-            Assisted minus unaided
-          </h2>
-          <span className="shrink-0 bg-ink px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-chalk">
-            dependence signal
-          </span>
-        </div>
-
-        {gap === null ? (
-          <>
-            <p className="mt-2 font-display text-xl font-extrabold leading-tight">
-              Not enough data yet — needs <Num>{MIN_SAMPLE}</Num> attempts with
-              help and <Num>{MIN_SAMPLE}</Num> without
-            </p>
-            <p className="mt-1 text-sm text-slate">
-              The smaller side currently has <Num>{profile.gapSample}</Num>{" "}
-              {profile.gapSample === 1 ? "attempt" : "attempts"}.
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="mt-2 flex items-baseline gap-2">
-              <span className="num font-display text-5xl font-extrabold leading-none">
-                {gap > 0 ? "+" : ""}
-                {Math.round(gap)}
+        <Stat
+          label="Think time"
+          value={thinkMs === null ? "—" : Math.round(thinkMs / 1000)}
+          unit={thinkMs === null ? undefined : "s"}
+          icon="clock"
+          hint={
+            <>
+              <span className="font-semibold text-text-2">
+                What this counts.{" "}
               </span>
-              <span className="text-base text-slate">
-                {Math.abs(Math.round(gap)) === 1 ? "point" : "points"}
-              </span>
-            </p>
-            <p className="mt-1.5 text-sm text-slate">
-              Across {windowText}, the smaller side has{" "}
-              <Num>{profile.gapSample}</Num>{" "}
-              {profile.gapSample === 1 ? "attempt" : "attempts"}.{" "}
-              {previousGap === null ? (
-                <>No comparison with {comparison} yet.</>
-              ) : (
-                <>
-                  It was <Num>{previousGap > 0 ? "+" : ""}
-                  {Math.round(previousGap)}</Num> over {comparison}.
-                </>
-              )}
-            </p>
-          </>
-        )}
+              Help-seeking timing: the median gap between the item appearing and
+              your first submission or first hint request, taken across the days
+              you practised in {windowText}.
+            </>
+          }
+        />
 
-        <p className="mt-3 text-sm">
-          This is how often you are right when help is available, minus how
-          often you are right working alone. A wide positive gap means the
-          accuracy is leaning on the assistance. A gap near zero means the two
-          match, and a negative number means the unaided items are going better
-          than the assisted ones. It describes how the work is getting done, not
-          how clever anyone is.
-        </p>
-        <p className="plane-sm mt-3 bg-paper p-2.5 text-sm">
-          <span className="font-semibold">Try next. </span>
-          Work a set through without opening a hint. The unaided side of this
-          comparison is the side short of items, and a wide gap closes from that
-          end.
-        </p>
-        <ProxyNote className="mt-3" />
-      </section>
+        <Stat
+          label="Assisted − unaided"
+          value={gap === null ? "—" : `${gap > 0 ? "+" : ""}${Math.round(gap)}`}
+          unit={
+            gap === null
+              ? undefined
+              : Math.abs(Math.round(gap)) === 1
+                ? "pt"
+                : "pts"
+          }
+          icon="target"
+          tone={gap === null ? "default" : "brand"}
+          hint={
+            gap === null ? (
+              <>
+                <span className="font-semibold text-text-2">
+                  Dependence signal.{" "}
+                </span>
+                Needs <Num>{MIN_SAMPLE}</Num> attempts with help and{" "}
+                <Num>{MIN_SAMPLE}</Num> without. The smaller side currently has{" "}
+                <Num>{profile.gapSample}</Num>{" "}
+                {profile.gapSample === 1 ? "attempt" : "attempts"}.
+              </>
+            ) : (
+              <>
+                <span className="font-semibold text-text-2">
+                  Dependence signal.{" "}
+                </span>
+                Across {windowText}, the smaller side has{" "}
+                <Num>{profile.gapSample}</Num>{" "}
+                {profile.gapSample === 1 ? "attempt" : "attempts"}.{" "}
+                {previousGap === null ? (
+                  <>No comparison with {comparison} yet.</>
+                ) : (
+                  <>
+                    It was{" "}
+                    <Num>
+                      {previousGap > 0 ? "+" : ""}
+                      {Math.round(previousGap)}
+                    </Num>{" "}
+                    over {comparison}.
+                  </>
+                )}
+              </>
+            )
+          }
+        />
+      </StatGrid>
+
+      <WhyThis k="independence" className="mt-4" />
+
+      {/* The reasoning, kept whole and kept collapsed. R1 / F4 / M4. */}
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        <Disclosure summary="How to read the assisted − unaided gap">
+          <p className="text-sm leading-relaxed">
+            This is how often you are right when help is available, minus how
+            often you are right working alone. A wide positive gap means the
+            accuracy is leaning on the assistance. A gap near zero means the two
+            match, and a negative number means the unaided items are going
+            better than the assisted ones. It describes how the work is getting
+            done, not how clever anyone is.
+          </p>
+          <Well className="mt-3 text-sm leading-relaxed">
+            <span className="font-semibold">Try next. </span>
+            Work a set through without opening a hint. The unaided side of this
+            comparison is the side short of items, and a wide gap closes from
+            that end.
+          </Well>
+          <ProxyNote className="mt-3" />
+        </Disclosure>
+
+        <Disclosure summary="Why there is no single score">
+          <p className="text-sm leading-relaxed">
+            Anchor does not add these up. Accuracy, time taken, hint use and
+            retention are different behaviours, counted over different
+            denominators, from samples of different sizes. A composite of them
+            is not a validated construct, so one number would state a quantity
+            no evidence supports and would bury the sample size that makes each
+            figure readable in the first place.
+          </p>
+          <p className="mt-2.5 text-sm leading-relaxed">
+            So you get <Num>6</Num> dimensions, each with its own interval and
+            its own count, and nothing that ranks you against anyone else.
+          </p>
+          <ProxyNote variant="block" className="mt-3">
+            Every figure on this page is a count of what you did in this app
+            over {windowText}.
+          </ProxyNote>
+        </Disclosure>
+      </div>
 
       {/* F1–F5 — the dimensions, side by side, never combined. */}
-      <section aria-labelledby="dimensions" className="flex flex-col gap-3">
-        <h2
-          id="dimensions"
-          className="font-display text-lg font-extrabold tracking-tight"
-        >
-          The six dimensions
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          {profile.dimensions.map((dimension) => (
+      <Section
+        title="The six dimensions"
+        description="Each one counts a different behaviour over a different denominator, so each carries its own sample size and its own 95% interval. Below the five-item floor a card says so instead of printing a number."
+      >
+        <div className="stagger grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {profile.dimensions.map((dimension, i) => (
             <DimensionCard
               key={dimension.key}
               dimension={dimension}
               comparisonLabel={comparison}
               nextAction={NEXT_ACTION[dimension.key]}
+              index={i}
             />
           ))}
         </div>
-      </section>
+      </Section>
 
       {/* H3 — predicted against actual, by band. */}
-      <section className="plane p-5" aria-labelledby="calibration">
-        <h2
-          id="calibration"
-          className="font-display text-lg font-extrabold tracking-tight"
-        >
-          Confidence against results
-        </h2>
-        <p className="mt-2 text-sm text-slate">
-          Each point is a band of confidence ratings you gave before answering,
-          plotted against how often you turned out to be right in that band.
-        </p>
-        <div className="mt-3">
-          <CalibrationChart bins={curve} />
+      <Section
+        title="Confidence against results"
+        description="Each point is a band of confidence ratings you gave before answering, plotted against how often you turned out to be right in that band."
+      >
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CalibrationChart bins={curve} />
+          </Card>
+          <Card className="h-full">
+            <h3 className="t-eyebrow">Reading the curve</h3>
+            <p className="mt-2.5 text-[0.9375rem] leading-relaxed">{verdict}</p>
+            {meanError !== null && (
+              <p className="mt-3 text-sm leading-relaxed text-text-2">
+                Average distance between a rating and the result:{" "}
+                <Num>{Math.round(meanError)}</Num> points, from{" "}
+                <Num>{points.length}</Num>{" "}
+                {points.length === 1 ? "rated item" : "rated items"} in{" "}
+                {windowText}.
+              </p>
+            )}
+            <ProxyNote variant="block" className="mt-4">
+              Calibration here is the distance between a number you typed and an
+              outcome graded against a verified key.
+            </ProxyNote>
+            <WhyThis k="confidenceRating" className="mt-4" />
+          </Card>
         </div>
-        <p className="mt-3 text-sm">{verdict}</p>
-        {meanError !== null && (
-          <p className="mt-2 text-sm text-slate">
-            Average distance between a rating and the result:{" "}
-            <Num>{Math.round(meanError)}</Num> points, from{" "}
-            <Num>{points.length}</Num>{" "}
-            {points.length === 1 ? "rated item" : "rated items"} in {windowText}.
-          </p>
-        )}
-        <ProxyNote variant="block" className="mt-3">
-          Calibration here is the distance between a number you typed and an
-          outcome graded against a verified key.
-        </ProxyNote>
-      </section>
+      </Section>
 
       {/* §15 — the honesty surface, linked from the dashboard that uses it. */}
-      <section className="plane p-5" aria-labelledby="evidence">
-        <h2
-          id="evidence"
-          className="font-display text-lg font-extrabold tracking-tight"
-        >
-          Where these ideas come from
-        </h2>
-        <p className="mt-2 text-sm">
-          Anchor is built on a hypothesis about attempting first and fading
-          help, and that hypothesis has evidence behind it with real limits. The
-          effect sizes, the studies, and the things the research does not show
-          are written out in full.
-        </p>
-        <Link
-          href="/about-the-evidence"
-          className="mt-3 inline-flex min-h-11 items-center font-semibold underline decoration-slate underline-offset-4 hover:decoration-ink"
-        >
-          Read about the evidence
-        </Link>
-      </section>
-    </div>
-  );
-}
-
-function Fact({
-  headline,
-  definition,
-}: {
-  headline: ReactNode;
-  definition: ReactNode;
-}) {
-  return (
-    <section className="plane flex flex-col gap-2 p-4">
-      <h3 className="font-display text-lg font-extrabold leading-tight">
-        {headline}
-      </h3>
-      <p className="text-sm text-slate">
-        <span className="font-semibold text-ink">What this counts. </span>
-        {definition}
-      </p>
-      <ProxyNote />
-    </section>
+      <Section className="mt-10">
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+            <div className="min-w-0">
+              <h2 className="t-section">Where these ideas come from</h2>
+              <p className="mt-2 max-w-[62ch] text-sm leading-relaxed text-text-2">
+                Anchor is built on a hypothesis about attempting first and
+                fading help, and that hypothesis has evidence behind it with
+                real limits. The effect sizes, the studies, and the things the
+                research does not show are written out in full.
+              </p>
+            </div>
+            <Link
+              href="/about-the-evidence"
+              className="inline-flex min-h-11 shrink-0 items-center gap-1.5 text-sm font-semibold underline decoration-dotted underline-offset-4 hover:text-brand"
+            >
+              Read about the evidence
+              <Icon name="arrowRight" size={15} />
+            </Link>
+          </div>
+        </Card>
+      </Section>
+    </Page>
   );
 }

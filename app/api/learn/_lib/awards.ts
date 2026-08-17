@@ -160,15 +160,24 @@ export async function awardXp(
     "your XP for this item",
   );
 
-  const profile = await readRow(
-    db.from("profiles").select("xp").eq("id", attempt.user_id).maybeSingle(),
-    "your profile",
-  );
-  const total = Math.max(0, int(profile?.xp, 0) + delta);
-  await write(
-    db.from("profiles").update({ xp: total, level: levelForXp(total) }).eq("id", attempt.user_id),
-    "your XP",
-  );
+  // award_xp appends to the xp_events ledger and moves profiles.xp in a single
+  // atomic statement. The read-modify-write this replaces dropped awards when
+  // two requests for the same student overlapped, and left no history to plot
+  // on the progress timeline.
+  const rpc = db as unknown as {
+    rpc: (
+      fn: string,
+      args: Record<string, unknown>,
+    ) => Promise<{ error: { message: string } | null }>;
+  };
+  const { error } = await rpc.rpc("award_xp", {
+    p_user_id: attempt.user_id,
+    p_amount: delta,
+    p_reason_key: "learnItem",
+    p_source_kind: "item_attempt",
+    p_source_id: attempt.id,
+  });
+  if (error) throw new Error(`Could not save your XP. ${error.message}`);
 
   attempt.xp_awarded = result.total;
   return { ...result, delta };

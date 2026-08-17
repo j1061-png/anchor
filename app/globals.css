@@ -1,34 +1,143 @@
 @import "tailwindcss";
 
-:root {
-  /* UI palette — §7 of the spec. Everything derives from these. */
-  --paper: #e4e7dc;
-  --ink: #16190f;
-  /* Spec said #6e7a63; darkened one step so small text passes WCAG AA
-     (4.7:1 on paper, 5.5:1 on chalk) — the spec's own accessibility floor. */
-  --slate: #5d6852;
-  --flag: #e01b54;
-  --gold: #f0b429;
-  --chalk: #f7f8f4;
+/* ============================================================================
+   ANCHOR DESIGN SYSTEM
+   ----------------------------------------------------------------------------
+   One source of truth for surface, type, depth and motion.
 
-  /* Puzzle block fills — flat, saturated, never used for UI chrome. */
-  --block-1: #2e64e0; /* cobalt */
-  --block-2: #e8702a; /* orange */
-  --block-3: #23a55a; /* green */
-  --block-4: #17a2b0; /* teal */
-  --block-5: #a3b520; /* chartreuse */
-  --block-6: #d63b2f; /* red */
+   The old neo-brutalist names (paper/chalk/ink/slate/plane) are kept as
+   aliases so pages that have not been rebuilt yet inherit the new look
+   instead of breaking. New work should use the semantic names:
+   canvas / surface / raised / line / text / text-2 / text-3 / accent.
+   ============================================================================ */
+
+:root {
+  /* --- Brand ------------------------------------------------------------- */
+  --brand: #e01b54; /* crimson — independence, the one loud colour */
+  --brand-ink: #ffffff; /* text on brand */
+  --brand-soft: #fdeaef; /* brand at 8% on light */
+  --cobalt: #2e64e0; /* data / secondary series */
+  --gold: #f0b429; /* milestones */
+  --green: #16a34a; /* unaided, correct, growth */
+  --amber: #d97706; /* assisted */
+
+  /* --- Surfaces (light) --------------------------------------------------- */
+  --canvas: #f2f4ee; /* page */
+  --surface: #ffffff; /* cards */
+  --raised: #f8faf5; /* inset wells, secondary panels */
+  --sunken: #eaeee4; /* tracks, empty states */
+
+  /* --- Text (light) ------------------------------------------------------- */
+  --text: #14170f;
+  --text-2: #4a5445;
+  --text-3: #78826f;
+
+  /* --- Lines (light) ------------------------------------------------------ */
+  --line: rgb(20 23 15 / 0.09);
+  --line-strong: rgb(20 23 15 / 0.16);
+
+  /* --- Depth (light) ------------------------------------------------------ */
+  --shadow-xs: 0 1px 2px rgb(20 23 15 / 0.05);
+  --shadow-sm: 0 1px 3px rgb(20 23 15 / 0.06), 0 4px 12px rgb(20 23 15 / 0.04);
+  --shadow-md: 0 2px 6px rgb(20 23 15 / 0.07), 0 12px 28px rgb(20 23 15 / 0.07);
+  --shadow-lg: 0 4px 12px rgb(20 23 15 / 0.08), 0 24px 56px rgb(20 23 15 / 0.10);
+  --shadow-brand: 0 6px 20px rgb(224 27 84 / 0.28);
+
+  /* --- Puzzle block fills (flat, saturated, never UI chrome) -------------- */
+  --block-1: #2e64e0;
+  --block-2: #e8702a;
+  --block-3: #23a55a;
+  --block-4: #17a2b0;
+  --block-5: #a3b520;
+  --block-6: #d63b2f;
+
+  /* --- Radius ------------------------------------------------------------- */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+
+  /* --- Motion ------------------------------------------------------------- */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --t-fast: 130ms;
+  --t-base: 220ms;
+  --t-slow: 420ms;
+
+  /* --- Legacy aliases (do not use in new code) ---------------------------- */
+  --paper: var(--canvas);
+  --chalk: var(--surface);
+  --ink: var(--text);
+  --slate: var(--text-2);
+  --flag: var(--brand);
 
   color-scheme: light;
 }
 
+.dark {
+  --brand: #ff4d78;
+  --brand-ink: #17040b;
+  --brand-soft: rgb(255 77 120 / 0.14);
+  --cobalt: #6b9bff;
+  --gold: #f5c451;
+  --green: #4ade80;
+  --amber: #fbbf24;
+
+  --canvas: #0f110d;
+  --surface: #191c16;
+  --raised: #21251d;
+  --sunken: #0a0c08;
+
+  --text: #f1f4ec;
+  --text-2: #b4bcac;
+  --text-3: #838d7c;
+
+  --line: rgb(255 255 255 / 0.09);
+  --line-strong: rgb(255 255 255 / 0.18);
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.5), 0 4px 12px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 2px 6px rgb(0 0 0 / 0.5), 0 12px 28px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 4px 12px rgb(0 0 0 / 0.5), 0 24px 56px rgb(0 0 0 / 0.5);
+  --shadow-brand: 0 6px 24px rgb(255 77 120 / 0.3);
+
+  --block-1: #5b8bff;
+  --block-2: #ff9152;
+  --block-3: #43c97c;
+  --block-4: #35c2d0;
+  --block-5: #c2d63e;
+  --block-6: #ff6152;
+
+  color-scheme: dark;
+}
+
 @theme inline {
-  --color-paper: var(--paper);
-  --color-ink: var(--ink);
-  --color-slate: var(--slate);
-  --color-flag: var(--flag);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-sunken: var(--sunken);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-cobalt: var(--cobalt);
   --color-gold: var(--gold);
-  --color-chalk: var(--chalk);
+  --color-green: var(--green);
+  --color-amber: var(--amber);
+
+  /* Legacy colour aliases */
+  --color-paper: var(--canvas);
+  --color-chalk: var(--surface);
+  --color-ink: var(--text);
+  --color-slate: var(--text-2);
+  --color-flag: var(--brand);
+
   --color-block-1: var(--block-1);
   --color-block-2: var(--block-2);
   --color-block-3: var(--block-3);
@@ -40,88 +149,275 @@
   --font-body: var(--font-public-sans);
   --font-data: var(--font-martian-mono);
 
-  /* Radius roles: controls 2px, cards 10px, pills 999px. Nothing else. */
-  --radius-ctl: 2px;
-  --radius-card: 10px;
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+  /* Legacy radius aliases */
+  --radius-ctl: var(--r-sm);
+  --radius-card: var(--r-lg);
 
-  --shadow-plane: 4px 4px 0 0 rgb(22 25 15 / 0.12);
-  --shadow-plane-sm: 2px 2px 0 0 rgb(22 25 15 / 0.12);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  /* Legacy shadow aliases */
+  --shadow-plane: var(--shadow-sm);
+  --shadow-plane-sm: var(--shadow-xs);
+
+  --ease-out: var(--ease-out);
+  --ease-spring: var(--ease-spring);
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background-color: var(--paper);
-  /* 8px graph-paper grid, faint */
-  background-image: linear-gradient(
-      to right,
-      rgb(22 25 15 / 0.05) 1px,
-      transparent 1px
+  background-color: var(--canvas);
+  color: var(--text);
+  font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Two very soft brand-tinted pools of light instead of the old graph paper. */
+  background-image:
+    radial-gradient(
+      64rem 40rem at 85% -10%,
+      color-mix(in oklab, var(--brand) 7%, transparent),
+      transparent 60%
     ),
-    linear-gradient(to bottom, rgb(22 25 15 / 0.05) 1px, transparent 1px);
-  background-size: 8px 8px;
-  color: var(--ink);
-  font-family: var(--font-public-sans), sans-serif;
+    radial-gradient(
+      52rem 36rem at 5% 0%,
+      color-mix(in oklab, var(--cobalt) 6%, transparent),
+      transparent 55%
+    );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
-/* A card: solid chalk plane, 1px ink border, hard offset shadow. */
+.dark body {
+  background-image:
+    radial-gradient(
+      64rem 40rem at 85% -10%,
+      color-mix(in oklab, var(--brand) 10%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      52rem 36rem at 5% 0%,
+      color-mix(in oklab, var(--cobalt) 9%, transparent),
+      transparent 55%
+    );
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* Numbers are always mono + tabular: timers, scores, XP, ranks. */
+.num {
+  font-family: var(--font-martian-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+
+/* Fluid display sizes — big without overflowing a 360px phone. */
+.t-hero {
+  font-size: clamp(2.1rem, 1.3rem + 3.4vw, 3.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+}
+.t-title {
+  font-size: clamp(1.5rem, 1.15rem + 1.6vw, 2.1rem);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+.t-section {
+  font-size: clamp(1.12rem, 1rem + 0.5vw, 1.3rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+/* Small all-caps label used above sections and on stat cards. */
+.t-eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* ---------------------------------------------------------------------------
+   Surfaces
+   --------------------------------------------------------------------------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Interactive card: lifts on hover, presses on click. */
+.card-hover {
+  transition:
+    transform var(--t-base) var(--ease-out),
+    box-shadow var(--t-base) var(--ease-out),
+    border-color var(--t-base) var(--ease-out);
+}
+@media (hover: hover) {
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--line-strong);
+  }
+}
+.card-hover:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-xs);
+}
+
+.well {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+}
+
+/* Frosted bar for sticky navigation. */
+.glass {
+  background: color-mix(in oklab, var(--canvas) 82%, transparent);
+  backdrop-filter: saturate(1.6) blur(14px);
+  -webkit-backdrop-filter: saturate(1.6) blur(14px);
+}
+
+/* Legacy plane classes now render as modern cards. */
 .plane {
-  background: var(--chalk);
-  border: 1px solid var(--ink);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-plane);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
 }
-
 .plane-sm {
-  background: var(--chalk);
-  border: 1px solid var(--ink);
-  border-radius: var(--radius-ctl);
-  box-shadow: var(--shadow-plane-sm);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-xs);
 }
 
-/* Focus: visible, crimson, everywhere. */
+/* ---------------------------------------------------------------------------
+   Focus + selection
+   --------------------------------------------------------------------------- */
+
 :focus-visible {
-  outline: 2px solid var(--flag);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
+  border-radius: var(--r-xs);
 }
 
 ::selection {
-  background: var(--gold);
-  color: var(--ink);
+  background: color-mix(in oklab, var(--brand) 22%, transparent);
+  color: var(--text);
 }
 
-/* Numbers are always mono. Apply to timers, scores, XP, ranks. */
-.num {
-  font-family: var(--font-martian-mono), monospace;
-  font-variant-numeric: tabular-nums;
-}
+/* ---------------------------------------------------------------------------
+   Motion
+   --------------------------------------------------------------------------- */
 
 @keyframes deal-in {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--brand) 40%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
   }
 }
 
 @keyframes flash-correct {
   0%,
   100% {
-    background-color: var(--chalk);
+    background-color: var(--surface);
   }
   40% {
-    background-color: color-mix(in srgb, var(--block-3) 25%, var(--chalk));
+    background-color: color-mix(in srgb, var(--green) 22%, var(--surface));
   }
 }
 
 @keyframes flash-wrong {
   0%,
   100% {
-    background-color: var(--chalk);
+    background-color: var(--surface);
   }
   40% {
-    background-color: color-mix(in srgb, var(--flag) 20%, var(--chalk));
+    background-color: color-mix(in srgb, var(--brand) 18%, var(--surface));
   }
 }
 
@@ -144,10 +440,44 @@ body {
 }
 
 .deal-in {
-  animation: deal-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation: deal-in 0.3s var(--ease-out) both;
+}
+.rise-in {
+  animation: rise-in 0.42s var(--ease-out) both;
+}
+.fade-in {
+  animation: fade-in 0.3s var(--ease-out) both;
+}
+.pop-in {
+  animation: pop-in 0.32s var(--ease-spring) both;
 }
 
-/* Kill all motion when the user asked for none. */
+/* Stagger helper: set --i on children of an animated list. */
+.stagger > * {
+  animation: rise-in 0.44s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--sunken);
+  border-radius: var(--r-sm);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--surface) 70%, transparent),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -159,12 +489,56 @@ body {
   }
 }
 
-/* Native shell (iPhone notch): headers pad down into the safe area and the
-   secondary strip sticks below the taller bar. env() is 0 in web browsers,
-   so none of this changes the site. */
-header.sticky {
+/* ---------------------------------------------------------------------------
+   Utilities
+   --------------------------------------------------------------------------- */
+
+/* Safe areas — 0 in browsers, real insets in the iOS shell. */
+.pt-safe {
   padding-top: env(safe-area-inset-top);
 }
-.sticky.top-14 {
-  top: calc(3.5rem + env(safe-area-inset-top));
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+/* Clearance for the fixed mobile tab bar (bar + gap + home indicator). */
+.pb-tabbar {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+}
+.bottom-safe {
+  bottom: calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+/* Horizontal scrollers without visible scrollbars. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fade the right edge of a horizontal scroller so more content is implied. */
+.edge-fade {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 2rem),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 2rem),
+    transparent 100%
+  );
+}
+
+.grid-bg {
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 24px 24px;
 }

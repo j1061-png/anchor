@@ -7,6 +7,12 @@ import {
   type IndependenceDailyRow,
 } from "@/lib/research/independence";
 import { PROXY_DISCLAIMER } from "@/lib/research/types";
+import { Page, PageHeader, Section } from "@/components/ui/page";
+import { Card, Well } from "@/components/ui/card";
+import { Stat } from "@/components/ui/stat";
+import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
+import { WhyNote } from "@/components/ui/why-this";
 import { BrainOnlyRunner } from "./runner";
 
 // Feature E — Brain-Only mode.
@@ -15,6 +21,12 @@ import { BrainOnlyRunner } from "./runner";
 // and no solution button anywhere on this route: E1 asks for the assistance to
 // be absent, not disabled. The keys arrive after the session, on the self-check
 // screen (E2). Nothing on this page displays or ranks by time (E6).
+//
+// The assisted−unaided gap belongs to /independence, which owns it with a
+// selectable window and a comparison against the previous one. This page shows
+// the unaided side on its own — what you can do alone, in its own right — and
+// links across rather than restating the same statistic over a fixed 28 days
+// as if it were a different figure.
 
 export const metadata = { title: "Brain-only" };
 
@@ -111,199 +123,224 @@ export default async function BrainOnlyPage() {
     .map(toDailyRow)
     .filter((row): row is IndependenceDailyRow => row !== null);
 
+  // Only the unaided arm. The comparison against assisted work lives on
+  // /independence, where the window is selectable and the previous window is
+  // shown beside it.
   const unaided = arm(
     sum(daily, (r) => r.unaided_correct),
     sum(daily, (r) => r.unaided_attempts),
   );
-  const assisted = arm(
-    sum(daily, (r) => r.assisted_correct),
-    sum(daily, (r) => r.assisted_attempts),
-  );
-  const gap =
-    unaided.pct !== null && assisted.pct !== null ? assisted.pct - unaided.pct : null;
-  const gapSample = Math.min(unaided.attempts, assisted.attempts);
 
   const finishedCount = sessions.filter((row) => str(row.completed_at) !== null).length;
 
   return (
-    <div className="flex flex-col gap-6">
-      <section className="plane p-6">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Brain-only mode.
-        </h1>
-        <p className="mt-2 max-w-md text-slate">
-          A short set with the AI switched off. Same idea as training without the
-          machines: you find out what you can do on your own. Answers are checked
-          against the key afterwards, not during.
-        </p>
-        <ul className="mt-4 flex flex-col gap-1.5 text-sm text-slate">
-          <li>No hints, no tutor, no worked solutions while you work.</li>
-          <li>
-            <span className="num text-ink">5</span> items, about{" "}
-            <span className="num text-ink">5</span> minutes.
-          </li>
-          <li>Finishing counts. How fast you finish does not.</li>
-        </ul>
-      </section>
+    <Page width="wide">
+      <PageHeader
+        eyebrow="Unaided practice"
+        title="Brain-only."
+        lead="A short set with the AI switched off — not disabled, absent. This is where you find out what you can still do on your own. Your answers are checked against the verified key afterwards, never during."
+      />
 
-      <BrainOnlyRunner />
-
-      <section className="plane p-5">
-        <h2 className="font-display text-xl font-extrabold">AI-free streak</h2>
-        <div className="mt-3 flex items-end gap-6">
-          <div>
-            <p className="num font-display text-4xl font-extrabold">{streak}</p>
-            <p className="text-sm text-slate">sessions in a row</p>
-          </div>
-          <div>
-            <p className="num font-display text-2xl font-extrabold">{longest}</p>
-            <p className="text-sm text-slate">Longest run</p>
-          </div>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <BrainOnlyRunner />
         </div>
-        <p className="mt-3 max-w-md text-sm text-slate">
-          The run continues while you take no hint and no worked solution between
-          brain-only sessions. Taking help is not a failure — it just starts the
-          count again.
-        </p>
-      </section>
 
-      <section className="plane p-5">
-        <h2 className="font-display text-xl font-extrabold">
-          Unaided against assisted
-        </h2>
-        <p className="mt-1 max-w-md text-sm text-slate">
-          Last <span className="num text-ink">28</span> days of attempts, split by
-          whether you had help.
-        </p>
+        <Well>
+          <p className="t-eyebrow">The deal</p>
+          <ul className="mt-2.5 flex flex-col gap-2.5 text-sm leading-relaxed text-text-2">
+            <li className="flex gap-2.5">
+              <Icon name="lock" size={15} className="mt-0.5 shrink-0 text-text-3" />
+              No hints, no tutor and no worked solutions while you work. None of
+              it is built into this screen.
+            </li>
+            <li className="flex gap-2.5">
+              <Icon name="target" size={15} className="mt-0.5 shrink-0 text-text-3" />
+              <span>
+                <span className="num text-text">5</span> items, about{" "}
+                <span className="num text-text">5</span> minutes.
+              </span>
+            </li>
+            <li className="flex gap-2.5">
+              <Icon name="check" size={15} className="mt-0.5 shrink-0 text-text-3" />
+              Finishing counts. How fast you finish does not, and no clock is
+              shown anywhere here.
+            </li>
+          </ul>
+        </Well>
+      </div>
 
-        <dl className="mt-4 grid grid-cols-2 gap-4">
-          <ArmFigure
-            label="Unaided accuracy"
-            arm={unaided}
-            note="Solved with no hint and no worked solution."
+      <WhyNote k="brainOnly" className="mt-4" />
+
+      <Section
+        title="What the run is worth"
+        description="Two counts about the habit, and one about the work itself."
+      >
+        <div className="stagger grid gap-3 sm:grid-cols-3 sm:gap-4">
+          <Stat
+            icon="brainOnly"
+            label="AI-free run"
+            value={streak}
+            unit={streak === 1 ? "session" : "sessions"}
+            tone={streak > 0 ? "brand" : "default"}
+            hint="Continues while you take no hint and no worked solution between brain-only sessions. Taking help is not a failure — it just starts the count again."
           />
-          <ArmFigure
-            label="Assisted accuracy"
-            arm={assisted}
-            note="Solved with at least one hint available."
+          <Stat
+            icon="trophy"
+            label="Longest run"
+            value={longest}
+            unit={longest === 1 ? "session" : "sessions"}
+            hint="Your best streak so far. Kept as a marker, not a target to protect at all costs."
           />
-        </dl>
+          <Stat
+            icon="check"
+            label="Sessions finished"
+            value={finishedCount}
+            hint="Brain-only sets you completed and marked. An unfinished set is not counted against you."
+          />
+        </div>
+      </Section>
 
-        <div className="plane-sm mt-4 p-4">
-          <p className="text-sm font-semibold">Assisted minus unaided</p>
-          {gap === null ? (
-            <p className="mt-1 text-sm text-slate">
-              Not enough attempts on both sides yet. Needs at least{" "}
-              <span className="num text-ink">{MIN_SAMPLE}</span> in each, and you
-              have <span className="num text-ink">{gapSample}</span> in the
-              smaller one.
+      <Section
+        title="What you can do alone"
+        description="The unaided side on its own, over the last 28 days."
+      >
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <p className="t-eyebrow">Unaided accuracy</p>
+            {unaided.pct === null ? (
+              <>
+                <p className="num mt-2.5 text-[2rem] leading-none text-text-3">—</p>
+                <p className="mt-2.5 max-w-[54ch] text-sm leading-relaxed text-text-2">
+                  Needs <span className="num text-text">{MIN_SAMPLE}</span>{" "}
+                  unaided attempts before a rate means anything. You have{" "}
+                  <span className="num text-text">{unaided.attempts}</span>. A
+                  percentage from a handful of items is noise, so Anchor will not
+                  print one.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="num mt-2.5 text-[2rem] leading-none text-[var(--green)]">
+                  {unaided.pct}
+                  <span className="ml-1 text-base font-normal text-text-3">%</span>
+                </p>
+                <p className="mt-2.5 text-sm text-text-2">
+                  <span className="num">±{unaided.ci}</span> pts, n=
+                  <span className="num">{unaided.attempts}</span> attempts solved
+                  with no hint and no worked solution.
+                </p>
+              </>
+            )}
+            <p className="mt-3 max-w-[60ch] text-sm leading-relaxed text-text-2">
+              This counts every unaided attempt in the app, not only the ones in
+              brain-only sets. It is the number these sessions exist to hold up
+              when the help goes away.
             </p>
-          ) : (
-            <>
-              <p className="num font-display text-2xl font-extrabold">
-                {gap > 0 ? "+" : ""}
-                {gap} pts
-              </p>
-              <p className="mt-1 max-w-md text-sm text-slate">
-                {gap > 0
-                  ? "Your results lean on the help by this much. Closing the difference is what brain-only sessions are for."
-                  : "You are performing as well alone as you do with help."}{" "}
-                Based on <span className="num text-ink">{gapSample}</span>{" "}
-                attempts in the smaller group.
-              </p>
-            </>
-          )}
+            <p className="mt-3 text-xs leading-relaxed text-text-3">
+              {PROXY_DISCLAIMER}
+            </p>
+          </Card>
+
+          <Well>
+            <p className="t-eyebrow">Against assisted work</p>
+            <p className="mt-2.5 text-sm leading-relaxed text-text-2">
+              How this compares with your accuracy when help is available lives
+              on the independence page, where you can pick the window and see
+              where the difference was one window ago.
+            </p>
+            <Link
+              href="/independence"
+              className="mt-3.5 inline-flex items-center gap-1.5 text-sm font-semibold underline decoration-dotted underline-offset-4 hover:text-brand"
+            >
+              See assisted minus unaided
+              <Icon name="arrowRight" size={15} />
+            </Link>
+          </Well>
         </div>
+      </Section>
 
-        <p className="mt-3 text-xs text-slate">{PROXY_DISCLAIMER}</p>
-      </section>
-
-      <section className="plane p-5">
-        <h2 className="font-display text-xl font-extrabold">Past sessions</h2>
+      <Section title="Past sessions">
         {sessions.length === 0 ? (
-          <p className="mt-2 text-sm text-slate">
-            No brain-only sessions yet. The first one sets the baseline.
-          </p>
+          <Card>
+            <div className="flex items-start gap-3.5">
+              <span className="grid size-10 shrink-0 place-items-center rounded-[var(--r-md)] bg-raised text-text-3">
+                <Icon name="brainOnly" size={19} />
+              </span>
+              <div>
+                <p className="font-display text-base font-bold">
+                  No brain-only sessions yet.
+                </p>
+                <p className="mt-1.5 max-w-[58ch] text-sm leading-relaxed text-text-2">
+                  The first one sets your baseline: five items, nothing to lean
+                  on, and the key only after you finish. Every session after it
+                  is a check that the skill is still yours.
+                </p>
+              </div>
+            </div>
+          </Card>
         ) : (
-          <>
-            <p className="mt-1 text-sm text-slate">
-              <span className="num text-ink">{finishedCount}</span> finished.
-            </p>
-            <ul className="mt-3 flex flex-col gap-2">
-              {sessions.map((row) => {
-                const id = str(row.id) ?? "";
-                const done = str(row.completed_at) !== null;
-                return (
-                  <li
-                    key={id}
-                    className="plane-sm flex items-center justify-between gap-3 p-3"
-                  >
-                    <span className="num text-sm">{str(row.scheduled_for)}</span>
-                    <span className="text-sm text-slate">
+          <ul className="stagger grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {sessions.map((row) => {
+              const id = str(row.id) ?? "";
+              const done = str(row.completed_at) !== null;
+              return (
+                <li key={id}>
+                  <Card className="flex h-full flex-col gap-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="num text-sm text-text-2">
+                        {str(row.scheduled_for)}
+                      </span>
                       {done ? (
-                        <>
-                          <span className="num text-ink">
-                            {int(row.items_correct)}
-                          </span>
-                          <span className="text-slate">/</span>
-                          <span className="num text-ink">{int(row.items_total)}</span>{" "}
-                          unaided
-                          {row.self_checked === true ? " · self-checked" : ""}
-                        </>
+                        row.self_checked === true ? (
+                          <Badge tone="green" icon="check">
+                            Self-checked
+                          </Badge>
+                        ) : (
+                          <Badge tone="neutral">Marked</Badge>
+                        )
                       ) : (
-                        "not finished"
+                        <Badge tone="amber" icon="clock">
+                          Not finished
+                        </Badge>
                       )}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </>
+                    </div>
+                    {done ? (
+                      <p className="num text-[1.5rem] leading-none">
+                        {int(row.items_correct)}
+                        <span className="text-text-3">/</span>
+                        {int(row.items_total)}
+                        <span className="ml-2 font-body text-xs font-semibold uppercase tracking-wide text-text-3">
+                          unaided
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="text-sm leading-relaxed text-text-3">
+                        Started but never submitted, so nothing was marked.
+                      </p>
+                    )}
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
         )}
-        <p className="mt-3 text-sm text-slate">
-          Got one wrong? Write down what happened in your{" "}
-          <Link
-            href="/journal"
-            className="font-semibold underline decoration-slate underline-offset-4 hover:decoration-ink"
-          >
-            error journal
-          </Link>
-          .
-        </p>
-      </section>
-    </div>
-  );
-}
 
-function ArmFigure({
-  label,
-  arm,
-  note,
-}: {
-  label: string;
-  arm: Arm;
-  note: string;
-}) {
-  return (
-    <div>
-      <dt className="text-sm font-semibold">{label}</dt>
-      <dd>
-        {arm.pct === null ? (
-          <p className="mt-1 text-sm text-slate">
-            Needs <span className="num text-ink">{MIN_SAMPLE}</span> attempts. You
-            have <span className="num text-ink">{arm.attempts}</span>.
+        <Well className="mt-4">
+          <p className="text-sm leading-relaxed text-text-2">
+            Got one wrong? Write down what happened in your{" "}
+            <Link
+              href="/journal"
+              className="font-semibold underline decoration-dotted underline-offset-4 hover:text-brand"
+            >
+              error journal
+            </Link>{" "}
+            while you still remember what you were thinking. A mistake you have
+            explained to yourself is worth more than one you have only seen
+            corrected.
           </p>
-        ) : (
-          <>
-            <p className="num font-display text-3xl font-extrabold">{arm.pct}%</p>
-            <p className="text-sm text-slate">
-              <span className="num">±{arm.ci}</span> pts, n=
-              <span className="num">{arm.attempts}</span>
-            </p>
-          </>
-        )}
-        <p className="mt-1 text-xs text-slate">{note}</p>
-      </dd>
-    </div>
+        </Well>
+      </Section>
+    </Page>
   );
 }

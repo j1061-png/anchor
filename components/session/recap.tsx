@@ -38,9 +38,13 @@ interface RecapData {
 export function SessionRecap({
   sessionId,
   friendCode,
+  optedIn = false,
 }: {
   sessionId: string;
+  /** The sharer's friend code, so every shared link carries ?ref=. */
   friendCode?: string;
+  /** profiles.leaderboard_opt_in — off means the card would not render. */
+  optedIn?: boolean;
 }) {
   const [data, setData] = useState<RecapData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -212,14 +216,41 @@ export function SessionRecap({
       )}
 
       <section className="plane p-4">
-        <h2 className="mb-3 text-sm font-semibold">Share the score</h2>
-        <ShareButton
-          title="Anchor"
-          text={`${solved}/${data.perPuzzle.length} on today's five, ${data.perPuzzle.reduce((n, p) => n + p.hintsUsed, 0) === 0 ? "no hints" : "some hints"}.`}
-          url={`${typeof window === "undefined" ? "" : window.location.origin}/auth?mode=signup`}
-          imageUrl={`/api/share/score/${sessionId}`}
-          friendCode={friendCode}
-        />
+        <h2 className="mb-3 text-sm font-semibold">Share this set</h2>
+        {optedIn ? (
+          <>
+            <ShareButton
+              title="Anchor"
+              text={`${solved}/${data.perPuzzle.length} on today's five, ${data.perPuzzle.reduce((n, p) => n + p.hintsUsed, 0) === 0 ? "no hints" : "some hints"}.`}
+              url={`${typeof window === "undefined" ? "" : window.location.origin}/auth?mode=signup`}
+              imageUrl={`/api/share/score/${sessionId}`}
+              friendCode={friendCode}
+            />
+            <p className="mt-3 text-xs text-slate">
+              For a card that leads with what you did without help rather than
+              this set&apos;s score, use{" "}
+              <Link
+                href="/profile#share-progress"
+                className="font-semibold underline decoration-dotted underline-offset-4"
+              >
+                share your progress
+              </Link>
+              .
+            </p>
+          </>
+        ) : (
+          <p className="text-xs leading-relaxed text-slate">
+            Public share cards are off, so this one would not load for anyone
+            you sent it to.{" "}
+            <Link
+              href="/profile#sharing"
+              className="font-semibold underline decoration-dotted underline-offset-4"
+            >
+              Turn public cards on
+            </Link>
+            .
+          </p>
+        )}
       </section>
 
       <Link

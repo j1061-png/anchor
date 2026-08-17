@@ -13,13 +13,68 @@ import { PlayChallengeButton } from "./play-button";
 type Params = Promise<{ code: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
+// Without openGraph a pasted challenge link unfurls as bare text in every
+// chat app. The card image is the creator's progress card — and only when the
+// creator has opted in to public cards, because the image route would 404 for
+// anyone else and an unfurl must never imply consent that was not given.
 export async function generateMetadata({
   params,
 }: {
   params: Params;
 }): Promise<Metadata> {
-  const { code } = await params;
-  return { title: `Challenge ${code.toUpperCase()}` };
+  const { code: rawCode } = await params;
+  const code = rawCode.toUpperCase();
+  const title = `Challenge ${code}`;
+
+  if (!/^[A-Z2-9]{4,12}$/.test(code)) return { title };
+
+  const admin = createAdminClient();
+  const { data: challenge } = await admin
+    .from("challenges")
+    .select("creator_id, category, difficulty")
+    .eq("code", code)
+    .maybeSingle();
+  if (!challenge) return { title };
+
+  const { data: creator } = await admin
+    .from("profiles")
+    .select("display_name, leaderboard_opt_in")
+    .eq("id", challenge.creator_id)
+    .maybeSingle();
+
+  const name = creator?.display_name ?? "A player";
+  const description = `${name} set a challenge: ${
+    CATEGORY_LABELS[challenge.category]
+  }, difficulty ${challenge.difficulty}. Five puzzles, same seeds for everyone.`;
+
+  const images = creator?.leaderboard_opt_in
+    ? [
+        {
+          url: `/api/share/progress/${challenge.creator_id}?range=week`,
+          width: 1080,
+          height: 1080,
+          alt: `${name}'s unaided work on Anchor`,
+        },
+      ]
+    : undefined;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      type: "website",
+      title: `${name} set an Anchor challenge`,
+      description,
+      url: `/c/${code}`,
+      ...(images ? { images } : {}),
+    },
+    twitter: {
+      card: images ? "summary_large_image" : "summary",
+      title: `${name} set an Anchor challenge`,
+      description,
+      ...(images ? { images } : {}),
+    },
+  };
 }
 
 function timeLeft(expiresAt: string): {

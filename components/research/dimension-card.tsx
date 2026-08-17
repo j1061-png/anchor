@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { Dimension } from "@/lib/research/types";
 import { MIN_SAMPLE } from "@/lib/research/independence";
+import { Icon } from "@/components/ui/icon";
 import { ProxyNote } from "./proxy-note";
 
 // Feature F — one dimension of the independence profile, shown on its own (F1,
@@ -18,7 +19,8 @@ import { ProxyNote } from "./proxy-note";
 //
 // Nothing here colours a figure as good or bad. High hint reliance gets the same
 // ink as low hint reliance, and the card carries a next action rather than a
-// warning (G3 — never shame).
+// warning (G3 — never shame). The next action is the one thing that folds away,
+// so six cards read as six figures rather than six paragraphs.
 
 const SAMPLE_NOUN: Record<Dimension["key"], [string, string]> = {
   unaided_accuracy: ["unaided attempt", "unaided attempts"],
@@ -53,12 +55,15 @@ export interface DimensionCardProps {
    * nothing.
    */
   nextAction?: string;
+  /** Position in the grid, for the entrance stagger. */
+  index?: number;
 }
 
 export function DimensionCard({
   dimension,
   comparisonLabel,
   nextAction,
+  index = 0,
 }: DimensionCardProps) {
   const { key, label, value, ci, sample, lowerIsBetter, definition, trend } =
     dimension;
@@ -66,37 +71,36 @@ export function DimensionCard({
 
   return (
     <section
-      className="plane flex flex-col gap-2 p-4"
+      className="card flex h-full flex-col p-5"
+      style={{ "--i": index } as CSSProperties}
       aria-label={`${label}, ${enough ? `${Math.round(value)} percent from ${sample} ${noun(key, sample)}` : "not enough data yet"}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="font-display text-base font-extrabold tracking-tight">
-          {label}
-        </h3>
-        <span className="plane-sm shrink-0 px-1.5 py-0.5 text-[10px] font-semibold text-slate">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="t-section">{label}</h3>
+        <span className="t-eyebrow shrink-0 whitespace-nowrap pt-1">
           {lowerIsBetter ? "lower is better" : "higher is better"}
         </span>
       </div>
 
       {enough ? (
-        <div>
+        <div className="mt-3">
           <p className="flex items-baseline gap-2">
-            <span className="num font-display text-4xl font-extrabold leading-none">
+            <span className="num text-[2.5rem] leading-none">
               {Math.round(value)}%
             </span>
-            <span className="num text-base text-slate">± {ciPoints(ci)}</span>
+            <span className="num text-base text-text-3">± {ciPoints(ci)}</span>
           </p>
-          <p className="mt-1.5 text-sm text-slate">
+          <p className="mt-2 text-sm text-text-3">
             from <Num>{sample}</Num> {noun(key, sample)}, <Num>95%</Num> Wilson
             interval
           </p>
         </div>
       ) : (
-        <div>
-          <p className="font-display text-lg font-extrabold leading-tight">
+        <div className="mt-3">
+          <p className="font-display text-base font-bold leading-snug">
             Not enough data yet — needs <Num>{MIN_SAMPLE}</Num> attempts
           </p>
-          <p className="mt-1 text-sm text-slate">
+          <p className="mt-1.5 text-sm text-text-3">
             {sample === 0 ? (
               <>Nothing counted here yet.</>
             ) : (
@@ -108,20 +112,27 @@ export function DimensionCard({
         </div>
       )}
 
-      <p className="text-sm">
+      <p className="mt-3 text-sm leading-relaxed">
         <TrendLine trend={trend} comparisonLabel={comparisonLabel} />
       </p>
 
-      <p className="text-sm text-slate">{definition}</p>
+      <p className="mt-2 text-sm leading-relaxed text-text-2">{definition}</p>
 
       {nextAction ? (
-        <p className="plane-sm bg-paper p-2.5 text-sm">
-          <span className="font-semibold">Try next. </span>
-          {nextAction}
-        </p>
+        <details className="group mt-3">
+          <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold text-text-3 transition-colors hover:text-text-2 [&::-webkit-details-marker]:hidden">
+            <Icon
+              name="chevronDown"
+              size={13}
+              className="transition-transform duration-200 group-open:rotate-180"
+            />
+            Try next
+          </summary>
+          <p className="well mt-2 p-3 text-sm leading-relaxed">{nextAction}</p>
+        </details>
       ) : null}
 
-      <ProxyNote />
+      <ProxyNote className="mt-auto pt-3" />
     </section>
   );
 }
@@ -135,7 +146,7 @@ function TrendLine({
 }) {
   if (trend === null) {
     return (
-      <span className="text-slate">
+      <span className="text-text-3">
         No comparison with {comparisonLabel} yet. One of the two windows is
         under the <span className="num">{MIN_SAMPLE}</span>-item floor.
       </span>

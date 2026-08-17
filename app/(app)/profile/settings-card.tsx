@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cacheAiConsent } from "@/components/learn/ai-consent";
 import type { ProfileRow } from "@/lib/database.types";
 
 export interface SettingsCardProps {
@@ -13,11 +14,26 @@ export interface SettingsCardProps {
   leaderboardOptIn: boolean;
   reminderTime: string | null; // "HH:MM" or null
   timezone: string;
+  // 5.1.2(i): when the student agreed to their attempt text being sent to the
+  // AI provider, or null for never / revoked.
+  aiConsentAt: string | null;
+}
+
+function formatConsentDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "earlier";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
 }
 
 export function SettingsCard(props: SettingsCardProps) {
   const router = useRouter();
   const [publicBoard, setPublicBoard] = useState(props.leaderboardOptIn);
+  const [aiConsent, setAiConsent] = useState(props.aiConsentAt !== null);
+  const [aiConsentAt, setAiConsentAt] = useState(props.aiConsentAt);
   const [reminder, setReminder] = useState(props.reminderTime ?? "");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,6 +95,37 @@ export function SettingsCard(props: SettingsCardProps) {
     }
   }
 
+  /**
+   * 5.1.2(i). This is the only switch in the app that decides whether student
+   * text reaches the AI provider, so it goes through `/api/consent` rather than
+   * a direct column write — `profiles.ai_consent_at` is service-role only, for
+   * the same reason xp and streaks are.
+   *
+   * The localStorage cache the learn screen reads is updated alongside it, so
+   * turning AI off here takes effect on the next paint of the learn screen
+   * rather than after the next server round trip.
+   */
+  async function toggleAiConsent() {
+    const next = !aiConsent;
+    setError(null);
+    setAiConsent(next); // optimistic
+    try {
+      const res = await fetch("/api/consent", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ granted: next }),
+      });
+      if (!res.ok) throw new Error("failed");
+      const body = (await res.json().catch(() => null)) as { consentedAt?: string | null } | null;
+      setAiConsentAt(body?.consentedAt ?? null);
+      cacheAiConsent(next);
+      flashSaved();
+    } catch {
+      setAiConsent(!next);
+      setError("The AI setting didn't save. Try again.");
+    }
+  }
+
   async function changeReminder(value: string) {
     const before = reminder;
     setError(null);
@@ -102,15 +149,20 @@ export function SettingsCard(props: SettingsCardProps) {
         </span>
       </div>
 
-      <div className="mt-4 flex items-start justify-between gap-4">
+      <div
+        id="sharing"
+        className="mt-4 flex scroll-mt-24 items-start justify-between gap-4"
+      >
         <div>
           <p id="public-board-label" className="text-sm font-semibold">
-            Put me on the improvement boards
+            Public boards and share cards
           </p>
           <p className="mt-0.5 text-xs text-slate">
             Off by default. On, you&apos;re compared with people at your level
             on how much you improve and how much you do without help, over the
-            last seven days. Never on a top score.
+            last seven days — never on a top score. It is also what lets a share
+            card you send actually load for the person opening it. Off, those
+            links show nothing.
           </p>
         </div>
         <button
@@ -130,6 +182,53 @@ export function SettingsCard(props: SettingsCardProps) {
             <span
               className={`size-4.5 rounded-[1px] ${
                 publicBoard ? "bg-gold" : "bg-slate/60"
+              }`}
+            />
+          </span>
+        </button>
+      </div>
+
+      <div
+        id="ai"
+        className="mt-5 flex scroll-mt-24 items-start justify-between gap-4"
+      >
+        <div>
+          <p id="ai-consent-label" className="text-sm font-semibold">
+            AI hints and tutor
+          </p>
+          <p className="mt-0.5 text-xs text-slate">
+            On, the question and the text you write — your attempts, your tutor
+            messages, your explain-it-back — are sent to our AI provider
+            (DeepSeek) to write hints, tutor replies and the written half of
+            your end-of-item feedback. Off, none of that leaves Anchor: the
+            hints and tutor stop, and marking, the worked solution, XP, reviews
+            and your progress all carry on exactly as they are, because none of
+            them has ever used AI.
+            {aiConsent && aiConsentAt ? (
+              <>
+                {" "}
+                Agreed {formatConsentDate(aiConsentAt)}.
+              </>
+            ) : null}
+          </p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={aiConsent}
+          aria-labelledby="ai-consent-label"
+          onClick={toggleAiConsent}
+          className="flex min-h-11 cursor-pointer items-center"
+        >
+          <span
+            aria-hidden
+            className={`flex h-7 w-12 items-center rounded-(--radius-ctl) border border-ink px-1 transition-colors ${
+              aiConsent ? "justify-end bg-ink" : "justify-start bg-chalk"
+            }`}
+          >
+            <span
+              className={`size-4.5 rounded-[1px] ${
+                aiConsent ? "bg-gold" : "bg-slate/60"
               }`}
             />
           </span>

@@ -23,6 +23,9 @@ export type ProfileRow = {
   ai_free_streak: number;
   ai_free_longest: number;
   retrieval_streak: number;
+  // Added by 20260814000100_ai_consent.sql. Null means no consent, so no
+  // student text may be sent to the AI provider (guideline 5.1.2(i)).
+  ai_consent_at: string | null;
   xp: number;
   level: number;
   streak_current: number;
@@ -263,6 +266,17 @@ export type Database = {
     };
     Functions: {
       refresh_weekly_xp: { Args: Record<string, never>; Returns: undefined };
+      /** Appends to the xp_events ledger and moves profiles.xp atomically. */
+      award_xp: {
+        Args: {
+          p_user_id: string;
+          p_amount: number;
+          p_reason_key: string;
+          p_source_kind: string;
+          p_source_id?: string | null;
+        };
+        Returns: number;
+      };
       lookup_friend_code: {
         Args: { code: string };
         Returns: {

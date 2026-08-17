@@ -34,6 +34,10 @@ function SequenceRecall({
   const [taps, setTaps] = useState<[number, number][]>([]);
   const [wasCorrect, setWasCorrect] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Held until the student presses Next, so the result stays readable.
+  const [pending, setPending] = useState<Parameters<typeof onSolve>[0] | null>(
+    null,
+  );
   const startRef = useRef(performance.now());
   const submitted = useRef(false);
 
@@ -85,15 +89,14 @@ function SequenceRecall({
         const result = await onGrade(answer);
         setWasCorrect(result.correct);
         setPhase("done");
-        setTimeout(() => {
-          onSolve({
-            correct: result.correct,
-            timeMs: Math.round(performance.now() - startRef.current),
-            hintsUsed: 0,
-            attempts: 1,
-            answer,
-          });
-        }, 1200);
+        // Held until the student presses Next, so the answer stays readable.
+        setPending({
+          correct: result.correct,
+          timeMs: Math.round(performance.now() - startRef.current),
+          hintsUsed: 0,
+          attempts: 1,
+          answer,
+        });
       } catch {
         submitted.current = false;
         setPhase("answer");
@@ -174,7 +177,12 @@ function SequenceRecall({
           Undo last tap
         </Button>
       )}
-      {error && <p className="text-sm text-flag">{error}</p>}
+      {pending && (
+        <Button onClick={() => onSolve(pending)} className="self-start">
+          Next puzzle
+        </Button>
+      )}
+      {error && <p className="text-sm text-brand">{error}</p>}
     </div>
   );
 }
@@ -198,6 +206,12 @@ function NBackRecall({
   const startRef = useRef(performance.now());
   const flaggedRef = useRef<number[]>([]);
   const submitted = useRef(false);
+  const retries = useRef(0);
+  const [error, setError] = useState<string | null>(null);
+  // Held until the student presses Next, so the result stays readable.
+  const [pending, setPending] = useState<Parameters<typeof onSolve>[0] | null>(
+    null,
+  );
 
   const submit = useCallback(async () => {
     if (submitted.current) return;
@@ -208,21 +222,28 @@ function NBackRecall({
       const result = await onGrade(answer);
       setWasCorrect(result.correct);
       setPhase("done");
-      setTimeout(() => {
-        onSolve({
-          correct: result.correct,
-          timeMs: Math.round(performance.now() - startRef.current),
-          hintsUsed: 0,
-          attempts: 1,
-          answer,
-        });
-      }, 1200);
+      setPending({
+        correct: result.correct,
+        timeMs: Math.round(performance.now() - startRef.current),
+        hintsUsed: 0,
+        attempts: 1,
+        answer,
+      });
     } catch {
-      // A dropped stream cannot be replayed; grade what we have on retry.
+      // A dropped stream cannot be replayed, so retry rather than lose the
+      // round — but a bounded number of times, and say so. This used to retry
+      // forever in silence, leaving the screen on "Checking." when offline.
       submitted.current = false;
-      setTimeout(submit, 1500);
+      retries.current += 1;
+      if (retries.current <= 3) {
+        setError(null);
+        setTimeout(submit, 1500 * retries.current);
+      } else {
+        setPhase("done");
+        setError("That didn't save. Check your connection and try again.");
+      }
     }
-  }, [onGrade, onSolve]);
+  }, [onGrade]);
 
   useEffect(() => {
     if (phase !== "stream") return;
@@ -296,17 +317,25 @@ function NBackRecall({
               <span className="text-2xl">{wasCorrect ? "yes" : "no"}</span>
             )}
           </div>
-          <Button
-            onClick={flag}
-            disabled={phase !== "stream"}
-            className="h-16 w-full max-w-xs text-lg"
-            aria-label="flag a match"
-          >
-            Match
-          </Button>
-          <p className="num text-xs text-slate">
-            {flagged.length} flagged
-          </p>
+          {pending ? (
+            <Button
+              onClick={() => onSolve(pending)}
+              className="h-16 w-full max-w-xs text-lg"
+            >
+              Next puzzle
+            </Button>
+          ) : (
+            <Button
+              onClick={flag}
+              disabled={phase !== "stream"}
+              className="h-16 w-full max-w-xs text-lg"
+              aria-label="flag a match"
+            >
+              Match
+            </Button>
+          )}
+          <p className="num text-xs text-text-3">{flagged.length} flagged</p>
+          {error && <p className="text-sm text-brand">{error}</p>}
         </>
       )}
     </div>

@@ -1,7 +1,27 @@
 import { NextResponse, type NextRequest } from "next/server.js";
 import { createServerClient } from "@supabase/ssr";
 
-const GUARDED = ["/today", "/dashboard", "/leaderboard", "/profile", "/session", "/practice", "/onboarding"];
+// Every signed-in route. The list used to omit /learn, /review, /progress,
+// /independence, /brain-only, /journal and /about-the-evidence, so a deep link
+// to any of them fell through to the layout's redirect, which loses the ?next=
+// return path — you signed in and landed on /today instead of where you were
+// going. Keep this in step with the (app) route group.
+const GUARDED = [
+  "/today",
+  "/learn",
+  "/review",
+  "/journal",
+  "/progress",
+  "/independence",
+  "/dashboard",
+  "/leaderboard",
+  "/brain-only",
+  "/about-the-evidence",
+  "/profile",
+  "/session",
+  "/practice",
+  "/onboarding",
+];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

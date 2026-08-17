@@ -1,7 +1,14 @@
 import Link from "next/link";
+import { Icon } from "@/components/ui/icon";
 
 // Shared shapes and presentational pieces for the leaderboard. No hooks here;
 // everything renders on the server. Tab state lives in the URL (?tab=&page=).
+//
+// There is no streak column. Every row used to be built with `streak: 0`
+// hardcoded in page.tsx, so the board rendered a column of permanent zeroes and
+// told screen readers "0 day streak" about everyone. Neither board view carries
+// a streak, so rather than invent one the column is gone; recall days live on
+// Today and on the profile, where the number is real.
 
 export const PAGE_SIZE = 50;
 
@@ -17,24 +24,6 @@ export interface BoardRow {
   name: string;
   avatarEmoji: string | null;
   metric: number;
-  streak: number;
-}
-
-// The block motif at its smallest: a 4-cell streak glyph.
-function StreakBlocks({ streak }: { streak: number }) {
-  const filled = Math.min(4, streak);
-  return (
-    <span aria-hidden className="grid grid-cols-2 gap-px">
-      {Array.from({ length: 4 }, (_, i) => (
-        <span
-          key={i}
-          className={`size-1.5 rounded-[1px] ${
-            i < filled ? "bg-flag" : "border border-slate/50 bg-transparent"
-          }`}
-        />
-      ))}
-    </span>
-  );
 }
 
 function Row({
@@ -48,41 +37,53 @@ function Row({
 }) {
   return (
     <li
-      aria-label={`rank ${row.rank}: ${row.name}, ${metricLabel} ${row.metric}, ${row.streak} day streak`}
-      className={`flex min-h-11 items-center gap-3 px-3 py-1 ${
+      aria-label={`rank ${row.rank}: ${row.name}, ${metricLabel} ${row.metric}${highlight ? ", you" : ""}`}
+      className={`flex min-h-14 items-center gap-3 px-4 ${
         highlight
-          ? "rounded-[2px] border border-ink bg-gold/10"
-          : "border-b border-ink/10 last:border-b-0"
+          ? "bg-[var(--brand-soft)]"
+          : "border-b border-[var(--line)] last:border-b-0"
       }`}
     >
-      <span aria-hidden className="num w-8 shrink-0 text-right text-xs text-slate">
+      <span
+        aria-hidden
+        className={`num w-8 shrink-0 text-right text-xs ${
+          row.rank <= 3 ? "font-semibold text-text" : "text-text-3"
+        }`}
+      >
         {row.rank}
       </span>
+
       {row.avatarEmoji ? (
         <span
           aria-hidden
-          className="flex size-8 shrink-0 items-center justify-center text-base"
+          className="grid size-9 shrink-0 place-items-center rounded-full bg-raised text-base"
         >
           {row.avatarEmoji}
         </span>
       ) : (
         <span
           aria-hidden
-          className="size-8 shrink-0 rounded-[2px] border border-slate/40 bg-chalk"
-        />
+          className="grid size-9 shrink-0 place-items-center rounded-full bg-raised text-text-3"
+        >
+          <Icon name="profile" size={16} />
+        </span>
       )}
-      <span aria-hidden className="min-w-0 flex-1 truncate text-sm font-semibold">
-        {row.name}
-      </span>
-      <span aria-hidden className="num w-16 shrink-0 text-right text-sm">
-        {row.metric}
-      </span>
+
       <span
         aria-hidden
-        className="flex w-14 shrink-0 items-center justify-end gap-1.5"
+        className="min-w-0 flex-1 truncate text-sm font-semibold"
       >
-        <span className="num text-xs">{row.streak}</span>
-        <StreakBlocks streak={row.streak} />
+        {row.name}
+        {highlight && (
+          <span className="ml-2 text-xs font-semibold text-brand">you</span>
+        )}
+      </span>
+
+      <span aria-hidden className="num w-20 shrink-0 text-right text-sm font-semibold">
+        {row.metric}
+        <span className="ml-0.5 text-xs font-normal text-text-3">
+          {metricLabel}
+        </span>
       </span>
     </li>
   );
@@ -100,16 +101,15 @@ export function Board({
   metricLabel: string;
 }) {
   return (
-    <section className="plane overflow-hidden">
+    <div className="card overflow-hidden p-0">
       <div
         aria-hidden
-        className="flex items-center gap-3 border-b border-ink/15 px-3 py-2 text-xs text-slate"
+        className="t-eyebrow flex items-center gap-3 border-b border-[var(--line)] bg-raised px-4 py-2.5"
       >
         <span className="w-8 shrink-0 text-right">#</span>
-        <span className="size-8 shrink-0" />
+        <span className="size-9 shrink-0" />
         <span className="min-w-0 flex-1">name</span>
-        <span className="w-16 shrink-0 text-right">{metricLabel}</span>
-        <span className="w-14 shrink-0 text-right">streak</span>
+        <span className="w-20 shrink-0 text-right">{metricLabel}</span>
       </div>
       <ol aria-label={`ranked by ${metricLabel}`}>
         {rows.map((r) => (
@@ -122,13 +122,13 @@ export function Board({
         ))}
       </ol>
       {pinned && (
-        <div className="border-t border-dashed border-slate/60 p-1">
+        <div className="border-t border-dashed border-[var(--line-strong)]">
           <ol aria-label="your rank">
             <Row row={pinned} highlight metricLabel={metricLabel} />
           </ol>
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
@@ -145,15 +145,19 @@ export function Pager({
   if (pages <= 1 && page <= 1) return null;
 
   const live =
-    "plane-sm inline-flex min-h-11 items-center px-4 text-sm font-semibold hover:bg-paper";
+    "inline-flex min-h-11 items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line-strong)] bg-surface px-4 text-sm font-semibold shadow-[var(--shadow-xs)] transition-colors hover:bg-raised";
   const dead =
-    "plane-sm inline-flex min-h-11 items-center px-4 text-sm font-semibold opacity-40";
+    "inline-flex min-h-11 items-center gap-1.5 rounded-[var(--r-sm)] border border-[var(--line)] px-4 text-sm font-semibold text-text-3 opacity-50";
   const href = (p: number) => `/leaderboard?tab=${tab}&page=${p}`;
 
   return (
-    <nav aria-label="Leaderboard pages" className="flex items-center justify-between">
+    <nav
+      aria-label="Leaderboard pages"
+      className="mt-4 flex items-center justify-between gap-3"
+    >
       {page > 1 ? (
         <Link href={href(page - 1)} scroll={false} className={live}>
+          <Icon name="chevronRight" size={14} className="rotate-180" />
           Previous
         </Link>
       ) : (
@@ -161,13 +165,14 @@ export function Pager({
           Previous
         </span>
       )}
-      <span className="text-xs text-slate">
+      <span className="text-xs text-text-3">
         page <span className="num">{page}</span> of{" "}
         <span className="num">{pages}</span>
       </span>
       {page < pages ? (
         <Link href={href(page + 1)} scroll={false} className={live}>
           Next
+          <Icon name="chevronRight" size={14} />
         </Link>
       ) : (
         <span aria-disabled="true" className={dead}>

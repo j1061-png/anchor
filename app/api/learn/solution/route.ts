@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { generateHint } from "@/lib/research/tutor";
 import { attemptsRequiredFor } from "@/lib/research/support";
+import { hasAiConsent } from "@/lib/ai-consent";
 import { broke, fail } from "../_lib/db";
 import {
   buildState,
@@ -28,6 +29,13 @@ import { markThinkMs, recordStep } from "../_lib/awards";
 //
 // The solution is served verbatim from the verified `worked_solution`. A model
 // rewrite of a checked solution adds a hallucination surface for no gain (I3).
+//
+// Which is why this route is NOT refused when AI consent is absent. At
+// `helpLevel: 'solution'` `generateHint` returns the stored text and makes no
+// provider call, so nothing the student wrote leaves the app either way — and
+// the consent card promises in as many words that the worked solution still
+// works if you say no. Consent is still passed down, so that if this path ever
+// grows a model call it is off by default for a student who declined.
 
 const bodySchema = z.object({ attemptId: z.uuid() });
 
@@ -55,6 +63,7 @@ export async function POST(request: Request) {
       // policy passed here must allow it; the gate above is what decides whether
       // we get this far.
       supportPolicy: { ...ctx.policy, maxHelp: "solution" },
+      useModel: await hasAiConsent(ctx.userId),
     });
 
     // Path 2 — finished item, self-check. No record, no penalty.

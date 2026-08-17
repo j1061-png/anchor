@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
+import { ProgressBar } from "@/components/ui/progress";
 import type { PublicItem } from "@/lib/research/types";
 import { SelfCheck, type ItemResult } from "./self-check";
 import { MathText } from "@/components/math-text";
@@ -32,6 +35,10 @@ interface CompleteResponse {
 }
 
 type Phase = "idle" | "working" | "checking";
+
+/** Shared field styling, on design tokens so both themes work. */
+const FIELD =
+  "w-full rounded-[var(--r-md)] border border-[var(--line-strong)] bg-surface px-3.5 py-2.5 text-sm leading-relaxed text-text placeholder:text-text-3";
 
 const multiline = (item: PublicItem) =>
   item.kind === "reasoning" || item.kind === "transfer";
@@ -128,18 +135,32 @@ export function BrainOnlyRunner() {
     const last = index === items.length - 1;
 
     return (
-      <section className="plane p-6" aria-labelledby="brain-only-item">
-        <p className="text-sm text-slate" aria-live="polite">
-          Item <span className="num text-ink">{index + 1}</span> of{" "}
-          <span className="num text-ink">{items.length}</span> ·{" "}
-          <span className="num text-ink">{answered}</span> answered
-        </p>
+      <Card className="h-full" aria-labelledby="brain-only-item">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-text-2" aria-live="polite">
+            Item <span className="num font-semibold text-text">{index + 1}</span>{" "}
+            of <span className="num font-semibold text-text">{items.length}</span>{" "}
+            · <span className="num">{answered}</span> answered
+          </p>
+          <Badge tone="brand" icon="lock">
+            No help available
+          </Badge>
+        </div>
 
-        <p className="mt-1 text-xs uppercase tracking-wide text-slate">
+        <ProgressBar
+          value={(index + 1) / items.length}
+          className="mt-3"
+          label={`Item ${index + 1} of ${items.length}`}
+        />
+
+        <p className="t-eyebrow mt-5">
           {item.subject} · {item.topic}
         </p>
 
-        <h2 id="brain-only-item" className="mt-3 text-lg font-semibold leading-snug">
+        <h2
+          id="brain-only-item"
+          className="mt-2 font-display text-lg font-bold leading-snug"
+        >
           <MathText text={item.stem} />
         </h2>
 
@@ -147,40 +168,49 @@ export function BrainOnlyRunner() {
           {item.distractors && item.distractors.length > 0 ? (
             <fieldset>
               <legend className="sr-only">Choose your answer</legend>
-              <ul className="flex flex-col gap-2">
-                {item.distractors.map((option) => (
-                  <li key={option}>
-                    <label className="plane-sm flex min-h-11 cursor-pointer items-center gap-3 px-3 py-2 text-sm">
-                      <input
-                        type="radio"
-                        name={`answer-${item.id}`}
-                        value={option}
-                        checked={(answers[item.id] ?? "") === option}
-                        onChange={() =>
-                          setAnswers((prev) => ({ ...prev, [item.id]: option }))
-                        }
-                        className="size-4 accent-[var(--ink)]"
-                      />
-                      {option}
-                    </label>
-                  </li>
-                ))}
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {item.distractors.map((option) => {
+                  const chosen = (answers[item.id] ?? "") === option;
+                  return (
+                    <li key={option}>
+                      <label
+                        className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-[var(--r-md)] border px-3.5 py-2.5 text-sm transition-colors ${
+                          chosen
+                            ? "border-brand bg-[var(--brand-soft)] font-semibold text-text"
+                            : "border-[var(--line-strong)] bg-surface text-text-2 hover:bg-raised hover:text-text"
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name={`answer-${item.id}`}
+                          value={option}
+                          checked={chosen}
+                          onChange={() =>
+                            setAnswers((prev) => ({ ...prev, [item.id]: option }))
+                          }
+                          className="size-4 accent-[var(--brand)]"
+                        />
+                        {option}
+                      </label>
+                    </li>
+                  );
+                })}
               </ul>
             </fieldset>
           ) : multiline(item) ? (
             <textarea
               id={`answer-${item.id}`}
               aria-label="Your answer"
-              rows={4}
+              rows={5}
               value={answers[item.id] ?? ""}
               onChange={(event) =>
                 setAnswers((prev) => ({ ...prev, [item.id]: event.target.value }))
               }
               placeholder="Your working and your answer"
-              className="w-full rounded-(--radius-ctl) border border-ink bg-chalk px-3 py-2.5 text-sm text-ink placeholder:text-slate"
+              className={FIELD}
             />
           ) : (
-            <Input
+            <input
               id={`answer-${item.id}`}
               aria-label="Your answer"
               value={answers[item.id] ?? ""}
@@ -188,13 +218,14 @@ export function BrainOnlyRunner() {
                 setAnswers((prev) => ({ ...prev, [item.id]: event.target.value }))
               }
               placeholder="Your answer"
+              className={`${FIELD} min-h-11`}
             />
           )}
         </div>
 
-        <p className="mt-3 text-xs text-slate">
+        <p className="mt-3 text-xs leading-relaxed text-text-3">
           Nothing is marked until you finish. Anything left blank counts as not
-          solved.
+          solved — a guess you can explain is better than a blank.
         </p>
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -203,45 +234,54 @@ export function BrainOnlyRunner() {
             onClick={() => setIndex((i) => Math.max(0, i - 1))}
             disabled={index === 0 || busy}
           >
+            <Icon name="chevronRight" size={15} className="rotate-180" />
             Back
           </Button>
           {last ? (
-            <Button onClick={finish} disabled={busy}>
+            <Button onClick={finish} loading={busy}>
               {busy ? "Finishing" : "Finish and check"}
             </Button>
           ) : (
             <Button onClick={() => setIndex((i) => Math.min(items.length - 1, i + 1))}>
               Next item
+              <Icon name="chevronRight" size={15} />
             </Button>
           )}
         </div>
 
         {error && (
-          <p className="mt-3 text-sm text-flag" role="alert">
+          <p className="mt-3 text-sm font-semibold text-brand" role="alert">
             {error}
           </p>
         )}
-      </section>
+      </Card>
     );
   }
 
   return (
-    <section className="plane p-6">
-      <h2 className="font-display text-xl font-extrabold">Today&apos;s session</h2>
-      <p className="mt-2 max-w-md text-slate">
-        Five items, no help of any kind. You will see the verified key for every
-        one of them the moment you finish, and not before.
+    <Card className="rise-in h-full">
+      <Badge tone="brand" icon="brainOnly">
+        Today&apos;s session
+      </Badge>
+      <h2 className="mt-3.5 font-display text-xl font-bold">
+        Five items, nothing to lean on.
+      </h2>
+      <p className="mt-2 max-w-[52ch] text-[0.9375rem] leading-relaxed text-text-2">
+        No hints, no coach, no worked solutions. You will see the verified key
+        for every item the moment you finish, and not a second before — so the
+        recall has to come from you.
       </p>
-      <div className="mt-5 flex flex-col gap-2">
-        <Button onClick={start} disabled={busy} className="self-start">
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <Button onClick={start} loading={busy}>
           {busy ? "Starting" : "Start brain-only session"}
         </Button>
-        {error && (
-          <p className="text-sm text-flag" role="alert">
-            {error}
-          </p>
-        )}
+        <span className="text-sm text-text-3">about 5 minutes</span>
       </div>
-    </section>
+      {error && (
+        <p className="mt-3 text-sm font-semibold text-brand" role="alert">
+          {error}
+        </p>
+      )}
+    </Card>
   );
 }

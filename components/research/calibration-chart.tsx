@@ -9,9 +9,10 @@
 // chart on the page comes from calibrationVerdict, and it names bands, never the
 // student (H6).
 //
-// Colours are the token palette, restated as hex because Recharts writes SVG
-// presentation attributes: ink for the data, slate at 0.3 for the grid, flag for
-// the reference line. Nothing else.
+// Colours come from the token variables, written straight into the SVG
+// presentation attributes Recharts emits: cobalt for the data, the hairline
+// token for the grid, brand for the reference line. Nothing hard-coded, so both
+// themes work.
 //
 // The chart is decoration for screen readers; the table below it is the data,
 // so both stay in sync and the numbers are reachable without sight of the plot.
@@ -29,9 +30,10 @@ import {
 import type { CalibrationBin } from "@/lib/research/calibration";
 import { MIN_BIN_SAMPLE } from "@/lib/research/calibration";
 
-const INK = "#16190f";
-const SLATE = "#5d6852";
-const FLAG = "#e01b54";
+const INK = "var(--cobalt)";
+const SLATE = "var(--text-3)";
+const GRID = "var(--line-strong)";
+const FLAG = "var(--brand)";
 
 const TICKS = [0, 25, 50, 75, 100];
 
@@ -45,12 +47,12 @@ function BinTooltip({
   const bin = payload?.[0]?.payload;
   if (!active || !bin) return null;
   return (
-    <div className="plane-sm px-2.5 py-1.5 text-xs">
-      <p className="text-slate">{bin.rangeLabel} band</p>
-      <p className="num">
+    <div className="rounded-[var(--r-sm)] border border-[var(--line)] bg-surface px-2.5 py-1.5 text-xs shadow-[var(--shadow-md)]">
+      <p className="text-text-2">{bin.rangeLabel} band</p>
+      <p className="num font-semibold">
         said {bin.meanConfidence}% · right {bin.actualAccuracy}%
       </p>
-      <p className="num text-slate">
+      <p className="num text-text-3">
         {bin.n} {bin.n === 1 ? "item" : "items"}
       </p>
     </div>
@@ -64,7 +66,7 @@ export interface CalibrationChartProps {
 export function CalibrationChart({ bins }: CalibrationChartProps) {
   if (bins.length === 0) {
     return (
-      <p className="text-sm text-slate">
+      <p className="text-sm text-text-2">
         No confidence ratings recorded yet, so there is no curve to draw. Rate
         how sure you are before you answer and the bands fill in.
       </p>
@@ -79,7 +81,7 @@ export function CalibrationChart({ bins }: CalibrationChartProps) {
             data={bins}
             margin={{ top: 8, right: 12, bottom: 4, left: -20 }}
           >
-            <CartesianGrid stroke={SLATE} strokeOpacity={0.3} />
+            <CartesianGrid stroke={GRID} />
             <XAxis
               type="number"
               dataKey="meanConfidence"
@@ -87,7 +89,7 @@ export function CalibrationChart({ bins }: CalibrationChartProps) {
               ticks={TICKS}
               tick={{ fill: SLATE, fontSize: 11 }}
               tickLine={false}
-              axisLine={{ stroke: SLATE, strokeOpacity: 0.3 }}
+              axisLine={{ stroke: GRID }}
               tickFormatter={(v: number) => `${v}%`}
             />
             <YAxis
@@ -124,7 +126,7 @@ export function CalibrationChart({ bins }: CalibrationChartProps) {
         </ResponsiveContainer>
       </div>
 
-      <p className="mt-1 text-xs text-slate">
+      <p className="mt-1 text-xs text-text-3">
         Across the bottom: the confidence you stated. Up the side: how often you
         were right. The dashed line is where the two match exactly.
       </p>
@@ -135,7 +137,7 @@ export function CalibrationChart({ bins }: CalibrationChartProps) {
             Confidence bands, what you predicted, and what you scored
           </caption>
           <thead>
-            <tr className="border-b border-ink/20 text-xs text-slate">
+            <tr className="border-b border-[var(--line-strong)] text-xs text-text-3">
               <th scope="col" className="py-1.5 pr-2 font-semibold">
                 Band
               </th>
@@ -152,7 +154,7 @@ export function CalibrationChart({ bins }: CalibrationChartProps) {
           </thead>
           <tbody>
             {bins.map((bin) => (
-              <tr key={bin.bin} className="border-b border-ink/10 last:border-0">
+              <tr key={bin.bin} className="border-b border-[var(--line)] last:border-0">
                 <th scope="row" className="num py-1.5 pr-2 font-normal">
                   {bin.rangeLabel}
                 </th>
@@ -161,7 +163,7 @@ export function CalibrationChart({ bins }: CalibrationChartProps) {
                 <td className="num py-1.5">
                   {bin.n}
                   {bin.n < MIN_BIN_SAMPLE ? (
-                    <span className="ml-1.5 font-body text-xs text-slate">
+                    <span className="ml-1.5 font-body text-xs text-text-3">
                       too few to read
                     </span>
                   ) : null}

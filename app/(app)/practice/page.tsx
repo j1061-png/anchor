@@ -2,11 +2,36 @@
 
 // Practice picker (§4): choose a category and difficulty. Ratings move,
 // XP is halved, the streak is untouched — and the UI says so.
+//
+// One task, one form: this page is `focused` on purpose.
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Page, PageHeader } from "@/components/ui/page";
+import { Card, Well } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
+import { WhyThis } from "@/components/ui/why-this";
 import { CATEGORIES, CATEGORY_LABELS, type Category } from "@/lib/types";
+
+/** What practice does and does not do, said before you start rather than after. */
+const RULES: { icon: "target" | "spark" | "flame"; title: string; body: string }[] = [
+  {
+    icon: "target",
+    title: "Ratings move",
+    body: "Every answer updates the rating for the category you picked, exactly as the daily five do.",
+  },
+  {
+    icon: "spark",
+    title: "Half XP",
+    body: "You chose the category and the difficulty, so the work is worth less than a set picked for your weakest areas.",
+  },
+  {
+    icon: "flame",
+    title: "The streak is untouched",
+    body: "Only the daily session extends your run of days. Practice as much or as little as you like.",
+  },
+];
 
 export default function PracticePage() {
   const router = useRouter();
@@ -34,72 +59,115 @@ export default function PracticePage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">
-          Practice
-        </h1>
-        <p className="mt-1 text-sm text-slate">
-          Practice moves your ratings. Half xp. The streak only counts the
-          daily session.
-        </p>
-      </header>
+    <Page width="focused">
+      <PageHeader
+        eyebrow="Extra practice"
+        title="Pick what to work on."
+        lead="Puzzles in one category, at a difficulty you set. Use it when you already know which thing is shaky — the daily five choose for you, this does not."
+      />
 
-      <section className="plane p-5">
-        <h2 className="text-sm font-semibold">Category</h2>
-        <div
-          role="radiogroup"
-          aria-label="category"
-          className="mt-3 flex flex-wrap gap-2"
-        >
-          {CATEGORIES.map((c) => (
-            <button
-              key={c}
-              type="button"
-              role="radio"
-              aria-checked={category === c}
-              onClick={() => setCategory(c)}
-              className={`min-h-11 rounded-(--radius-ctl) border px-4 py-2 text-sm font-semibold ${
-                category === c
-                  ? "border-ink bg-ink text-chalk"
-                  : "border-ink bg-chalk text-ink hover:bg-paper"
-              }`}
+      <Card className="rise-in">
+        <fieldset>
+          <legend className="t-eyebrow">Category</legend>
+          <div
+            role="radiogroup"
+            aria-label="Category"
+            className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3"
+          >
+            {CATEGORIES.map((c) => {
+              const selected = category === c;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => setCategory(c)}
+                  className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-[var(--r-md)] border px-3 py-2.5 text-sm font-semibold transition-all duration-[130ms] ${
+                    selected
+                      ? "border-transparent bg-text text-canvas shadow-[var(--shadow-xs)]"
+                      : "border-[var(--line-strong)] bg-surface text-text-2 hover:bg-raised hover:text-text"
+                  }`}
+                >
+                  {selected && <Icon name="check" size={14} />}
+                  {CATEGORY_LABELS[c]}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <div className="mt-7">
+          <p className="t-eyebrow" id="difficulty-label">
+            Difficulty
+          </p>
+          <div className="mt-3 flex items-center gap-4">
+            <Button
+              variant="secondary"
+              aria-label="Lower difficulty"
+              onClick={() => setDifficulty((d) => Math.max(1, d - 1))}
+              disabled={difficulty <= 1}
             >
-              {CATEGORY_LABELS[c]}
-            </button>
-          ))}
+              <Icon name="minus" size={16} />
+            </Button>
+            <output
+              aria-live="polite"
+              aria-labelledby="difficulty-label"
+              className="num w-14 text-center text-[2rem] leading-none"
+            >
+              {difficulty}
+            </output>
+            <Button
+              variant="secondary"
+              aria-label="Raise difficulty"
+              onClick={() => setDifficulty((d) => Math.min(10, d + 1))}
+              disabled={difficulty >= 10}
+            >
+              <Icon name="plus" size={16} />
+            </Button>
+          </div>
+          <p className="mt-3 max-w-[52ch] text-sm leading-relaxed text-text-2">
+            <span className="num">1</span> is gentle,{" "}
+            <span className="num">10</span> is the hardest the generator makes.
+            Pick something you expect to get some of wrong — that is the range
+            where practice does anything.
+          </p>
         </div>
 
-        <h2 className="mt-6 text-sm font-semibold">Difficulty</h2>
-        <div className="mt-3 flex items-center gap-4">
-          <Button
-            variant="secondary"
-            aria-label="lower difficulty"
-            onClick={() => setDifficulty((d) => Math.max(1, d - 1))}
-            disabled={difficulty <= 1}
-          >
-            -
+        <div className="mt-7 flex flex-wrap items-center gap-3">
+          <Button onClick={start} loading={busy}>
+            {busy ? "Setting up" : `Start ${CATEGORY_LABELS[category]} practice`}
           </Button>
-          <span className="num w-10 text-center font-display text-2xl font-extrabold">
-            {difficulty}
+          <span className="text-sm text-text-3">
+            <span className="num">5</span> puzzles, about{" "}
+            <span className="num">8</span> minutes
           </span>
-          <Button
-            variant="secondary"
-            aria-label="raise difficulty"
-            onClick={() => setDifficulty((d) => Math.min(10, d + 1))}
-            disabled={difficulty >= 10}
-          >
-            +
-          </Button>
         </div>
+        {error && (
+          <p className="mt-3 text-sm text-brand" role="alert">
+            {error}
+          </p>
+        )}
+      </Card>
 
-        <div className="mt-6">
-          <Button onClick={start} disabled={busy}>
-            {busy ? "Setting up" : "Start practice"}
-          </Button>
-        </div>
-        {error && <p className="mt-2 text-sm text-flag">{error}</p>}
-      </section>
-    </div>
+      <WhyThis k="desirableDifficulty" className="mt-4" />
+
+      <Well className="mt-8">
+        <p className="t-eyebrow">What a practice set counts for</p>
+        <dl className="mt-3 grid gap-4 sm:grid-cols-3">
+          {RULES.map((rule) => (
+            <div key={rule.title}>
+              <dt className="flex items-center gap-2 text-sm font-semibold">
+                <Icon name={rule.icon} size={15} className="text-text-3" />
+                {rule.title}
+              </dt>
+              <dd className="mt-1.5 text-[0.8125rem] leading-relaxed text-text-2">
+                {rule.body}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Well>
+    </Page>
   );
 }

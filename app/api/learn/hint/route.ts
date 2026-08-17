@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { broke, fail } from "../_lib/db";
-import { currentUser, loadContext } from "../_lib/context";
+import { buildState, currentUser, loadContext } from "../_lib/context";
 import { escalate } from "../_lib/help";
+import { AI_HELP_OFF, hasAiConsent } from "@/lib/ai-consent";
 
 // POST /api/learn/hint — one rung up the ladder, or a 403 saying why not.
 //
@@ -18,6 +19,11 @@ import { escalate } from "../_lib/help";
 //
 // B8/I4: `grounded: false` means the key could not support a hint and the
 // student got a generic strategy prompt. Nothing is invented to fill the gap.
+//
+// Guideline 5.1.2(i): a hint is written by the AI provider from the attempt
+// chain, so without consent there is no hint to serve and the route refuses
+// before it reads a word of the student's working. The client hides the ladder
+// in the same state; this is the half that a client cannot skip.
 
 const bodySchema = z.object({ attemptId: z.uuid() });
 
@@ -32,6 +38,13 @@ export async function POST(request: Request) {
   if (!loaded.ok) {
     if (loaded.failure.kind === "not_found") return fail("That item is not one of yours.", 404);
     return broke("hint", loaded.failure.error, "Could not read that item. Try again.");
+  }
+
+  if (!(await hasAiConsent(user.id))) {
+    return NextResponse.json(
+      { error: AI_HELP_OFF, state: buildState(loaded.ctx) },
+      { status: 403 },
+    );
   }
 
   try {

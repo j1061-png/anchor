@@ -1,5 +1,21 @@
 import "server-only";
 import type { createAdminClient } from "@/lib/supabase/admin";
+import type { AchievementDef } from "@/lib/achievement-meta";
+
+// The shape and the group metadata live in lib/achievement-meta.ts so the
+// presentational grid can import them without pulling this server-only module
+// into a client bundle. Re-exported here so existing callers keep working.
+export type {
+  AchievementCategory,
+  AchievementDef,
+  AchievementMetric,
+  AchievementProgress,
+} from "@/lib/achievement-meta";
+export {
+  ACHIEVEMENT_CATEGORIES,
+  ACHIEVEMENT_CATEGORY_BLURBS,
+  ACHIEVEMENT_CATEGORY_LABELS,
+} from "@/lib/achievement-meta";
 
 // Achievement definitions and the single server evaluation function (§6).
 // The session-completion path calls evaluateAchievements after each session;
@@ -12,13 +28,6 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
-export interface AchievementDef {
-  key: string;
-  name: string;
-  description: string; // shown once earned
-  hint: string; // shown on the locked silhouette
-}
-
 export const ACHIEVEMENTS: AchievementDef[] = [
   // Volume
   {
@@ -26,30 +35,45 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: "opening move",
     description: "First session finished. Now do tomorrow's.",
     hint: "finish one session",
+    category: "volume",
+    icon: "spark",
+    progress: { metric: "sessions", target: 1, noun: "sessions finished" },
   },
   {
     key: "solved_10",
     name: "double digits",
     description: "10 puzzles solved.",
     hint: "solve 10 puzzles",
+    category: "volume",
+    icon: "check",
+    progress: { metric: "solved", target: 10, noun: "solved" },
   },
   {
     key: "solved_50",
     name: "half century",
     description: "50 solved. Past the warm-up.",
     hint: "solve 50 puzzles",
+    category: "volume",
+    icon: "practice",
+    progress: { metric: "solved", target: 50, noun: "solved" },
   },
   {
     key: "solved_100",
     name: "century",
     description: "100 puzzles solved, every one on record.",
     hint: "solve 100 puzzles",
+    category: "volume",
+    icon: "trophy",
+    progress: { metric: "solved", target: 100, noun: "solved" },
   },
   {
     key: "solved_250",
     name: "the long haul",
     description: "250 solved. This stopped being casual a while ago.",
     hint: "solve 250 puzzles",
+    category: "volume",
+    icon: "progress",
+    progress: { metric: "solved", target: 250, noun: "solved" },
   },
   // Independence
   {
@@ -57,18 +81,24 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: "own work",
     description: "5 straight solves, zero hints.",
     hint: "solve 5 in a row without a hint",
+    category: "independence",
+    icon: "brainOnly",
   },
   {
     key: "no_hint_20",
     name: "cold solver",
     description: "20 in a row without touching the hint button.",
     hint: "solve 20 in a row without a hint",
+    category: "independence",
+    icon: "brainOnly",
   },
   {
     key: "clean_session",
     name: "clean sheet",
     description: "A whole session and the hint button never got pressed.",
     hint: "finish a session without hints",
+    category: "independence",
+    icon: "evidence",
   },
   // Consistency
   {
@@ -76,24 +106,36 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: "three days",
     description: "3 days straight. A pattern forms.",
     hint: "keep a 3-day streak",
+    category: "consistency",
+    icon: "flame",
+    progress: { metric: "streak", target: 3, noun: "days in a row" },
   },
   {
     key: "streak_7",
     name: "the full week",
     description: "7 days without a gap.",
     hint: "keep a 7-day streak",
+    category: "consistency",
+    icon: "flame",
+    progress: { metric: "streak", target: 7, noun: "days in a row" },
   },
   {
     key: "streak_14",
     name: "fortnight",
     description: "14 consecutive days. Most people quit by day 4.",
     hint: "keep a 14-day streak",
+    category: "consistency",
+    icon: "today",
+    progress: { metric: "streak", target: 14, noun: "days in a row" },
   },
   {
     key: "iron_streak_30",
     name: "iron month",
     description: "30 days straight. The calendar works for you now.",
     hint: "keep a 30-day streak",
+    category: "consistency",
+    icon: "today",
+    progress: { metric: "streak", target: 30, noun: "days in a row" },
   },
   // Category mastery
   {
@@ -101,12 +143,22 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: "specialist",
     description: "One category rated 1400 or better.",
     hint: "reach a 1400 rating in any category",
+    category: "mastery",
+    icon: "target",
+    progress: { metric: "bestRating", target: 1400, noun: "best rating" },
   },
   {
     key: "rating_1400_x3",
     name: "triple threat",
     description: "Three categories at 1400 or better.",
     hint: "reach 1400 in three categories",
+    category: "mastery",
+    icon: "target",
+    progress: {
+      metric: "categoriesAt1400",
+      target: 3,
+      noun: "categories at 1400",
+    },
   },
   // Performance
   {
@@ -114,30 +166,40 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: "five for five",
     description: "Every puzzle in a session, correct.",
     hint: "go 5 for 5 in one session",
+    category: "performance",
+    icon: "check",
   },
   {
     key: "flawless_session",
     name: "flawless",
     description: "5 for 5 with zero hints. Frame it.",
     hint: "go 5 for 5 without a hint",
+    category: "performance",
+    icon: "spark",
   },
   {
     key: "d10_solve",
     name: "the deep end",
     description: "A difficulty 10 puzzle, solved.",
     hint: "solve a difficulty 10 puzzle",
+    category: "performance",
+    icon: "board",
   },
   {
     key: "sub_10s",
     name: "quick draw",
     description: "Correct in under 10 seconds.",
     hint: "solve any puzzle in under 10 seconds",
+    category: "performance",
+    icon: "clock",
   },
   {
     key: "comeback",
     name: "the recovery",
     description: "Three misses, then a solve. Steady hands.",
     hint: "solve one after 3 straight misses",
+    category: "performance",
+    icon: "rotate",
   },
   // Social
   {
@@ -145,12 +207,16 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     name: "two player",
     description: "First friend on the list.",
     hint: "add a friend who accepts",
+    category: "social",
+    icon: "users",
   },
   {
     key: "challenge_win",
     name: "head to head",
     description: "Top score in a challenge against at least one other.",
     hint: "win a challenge",
+    category: "social",
+    icon: "trophy",
   },
 ];
 

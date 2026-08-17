@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ShareInline } from "@/components/share/share-inline";
 import type { ProfileRow } from "@/lib/database.types";
 
 // Same 24 faces as onboarding, so a re-pick feels familiar.
@@ -36,6 +37,13 @@ export interface IdentityCardProps {
   streakCurrent: number;
   streakLongest: number;
   memberSince: string; // preformatted date string
+  /** Context for the recall-days share card. Omit to hide the affordance. */
+  share?: {
+    /** profiles.leaderboard_opt_in — the gate the image route enforces. */
+    optedIn: boolean;
+    friendCode?: string;
+    siteUrl: string;
+  };
 }
 
 export function IdentityCard(props: IdentityCardProps) {
@@ -278,6 +286,22 @@ export function IdentityCard(props: IdentityCardProps) {
           <dd className="num font-display text-2xl font-extrabold">
             {props.streakCurrent}
           </dd>
+          {props.share && props.streakCurrent > 0 && (
+            <dd>
+              <ShareInline
+                className="-ml-2"
+                label="Share your recall-days card"
+                title="Anchor"
+                text={`${props.streakCurrent} ${
+                  props.streakCurrent === 1 ? "day" : "days"
+                } of recall practice on Anchor.`}
+                url={`${props.share.siteUrl}/auth?mode=signup`}
+                imageUrl={`/api/share/streak/${props.userId}`}
+                friendCode={props.share.friendCode}
+                optedIn={props.share.optedIn}
+              />
+            </dd>
+          )}
         </div>
         <div>
           <dt className="text-xs text-slate">Longest run</dt>

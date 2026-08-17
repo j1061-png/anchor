@@ -1,7 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { MathText } from "@/components/math-text";
+import { Card, Well } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Icon } from "@/components/ui/icon";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Today's due items (N8), read from GET /api/learn/review/due.
 //
@@ -87,7 +92,7 @@ function GapCopy({ entry }: { entry: DueEntry }) {
   return (
     <>
       Get it right and the next check is in{approximate ? " about" : ""}{" "}
-      <span className="num text-ink">{days}</span> {days === 1 ? "day" : "days"}
+      <span className="num text-text">{days}</span> {days === 1 ? "day" : "days"}
     </>
   );
 }
@@ -132,80 +137,138 @@ export function DueList() {
 
   if (error) {
     return (
-      <section className="plane p-5">
-        <h2 className="font-display text-xl font-extrabold">Due today</h2>
-        <p className="mt-2 text-sm text-flag" role="alert">
+      <Card>
+        <p className="text-sm font-semibold text-brand" role="alert">
           {error}
         </p>
-      </section>
+        <p className="mt-1.5 text-sm leading-relaxed text-text-2">
+          Your schedule is safe — this is only the reading of it. Reload the
+          page and it will try again.
+        </p>
+      </Card>
     );
   }
 
   if (entries === null) {
     return (
-      <section className="plane p-5">
-        <h2 className="font-display text-xl font-extrabold">Due today</h2>
-        <p className="mt-2 text-sm text-slate" role="status">
-          Reading your queue.
-        </p>
-      </section>
+      <div
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        role="status"
+        aria-label="Reading your review queue"
+      >
+        {[0, 1, 2].map((i) => (
+          <Card key={i}>
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="mt-3.5 h-4 w-full" />
+            <Skeleton className="mt-2 h-4 w-3/4" />
+            <Skeleton className="mt-4 h-3 w-1/2" />
+          </Card>
+        ))}
+      </div>
     );
   }
 
   if (entries.length === 0) {
     return (
-      <section className="plane p-5">
-        <h2 className="font-display text-xl font-extrabold">Due today</h2>
-        <p className="mt-2 max-w-md text-sm text-slate">
-          Nothing due. Waiting is doing something here. The gap is what makes
-          the next check worth taking.
-        </p>
-      </section>
+      <Card>
+        <div className="flex items-start gap-3.5">
+          <span className="grid size-10 shrink-0 place-items-center rounded-[var(--r-md)] bg-raised text-text-3">
+            <Icon name="check" size={19} />
+          </span>
+          <div>
+            <p className="font-display text-base font-bold">
+              Nothing is due today.
+            </p>
+            <p className="mt-1.5 max-w-[58ch] text-sm leading-relaxed text-text-2">
+              This page holds items you have already answered once and brings
+              them back on the day they are about to fade. Waiting is doing
+              something here — the gap is what makes the next attempt worth
+              taking.
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+              <Link
+                href="/today"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold underline decoration-dotted underline-offset-4 hover:text-brand"
+              >
+                Do today&apos;s five
+                <Icon name="arrowRight" size={15} />
+              </Link>
+              <Link
+                href="/journal"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-2 underline decoration-dotted underline-offset-4 hover:text-brand"
+              >
+                Write up a mistake instead
+                <Icon name="arrowRight" size={15} />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </Card>
     );
   }
 
   return (
-    <section className="plane p-5">
-      <h2 className="font-display text-xl font-extrabold">Due today</h2>
-      <p className="mt-1 text-sm text-slate">
-        <span className="num text-ink">{entries.length}</span>{" "}
-        {entries.length === 1 ? "item" : "items"} to bring back from memory.
+    <>
+      <p className="mb-4 text-sm text-text-2">
+        <span className="num font-semibold text-text">{entries.length}</span>{" "}
+        {entries.length === 1 ? "item" : "items"} to bring back from memory. Try
+        to recall before you check.
       </p>
 
-      <ul className="mt-4 flex flex-col gap-3">
+      <ul className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {entries.map((entry) => (
-          <li key={entry.key} className="plane-sm p-4">
-            {entry.stem ? (
-              <p className="font-semibold leading-snug"><MathText text={entry.stem} /></p>
-            ) : (
-              <p className="font-semibold leading-snug">
-                {entry.topic ?? "An item you have seen before"}
+          <li key={entry.key}>
+            <Card className="flex h-full flex-col">
+              <div className="flex flex-wrap items-center gap-2">
+                {(entry.subject || entry.topic) && (
+                  <Badge tone="neutral">
+                    {[entry.subject, entry.topic].filter(Boolean).join(" · ")}
+                  </Badge>
+                )}
+                {entry.daysOverdue !== null && entry.daysOverdue > 0 && (
+                  <Badge tone="amber" icon="clock">
+                    <span className="num">{entry.daysOverdue}</span>{" "}
+                    {entry.daysOverdue === 1 ? "day" : "days"} late
+                  </Badge>
+                )}
+              </div>
+
+              <p className="mt-3 font-semibold leading-snug">
+                {entry.stem ? (
+                  <MathText text={entry.stem} />
+                ) : (
+                  (entry.topic ?? "An item you have seen before")
+                )}
               </p>
-            )}
-            {(entry.subject || entry.topic) && (
-              <p className="mt-1 text-xs uppercase tracking-wide text-slate">
-                {[entry.subject, entry.topic].filter(Boolean).join(" · ")}
-              </p>
-            )}
-            <p className="mt-2 text-sm text-slate">
-              {entry.intervalDays !== null && (
-                <>
-                  Last gap <span className="num text-ink">{entry.intervalDays}</span>{" "}
-                  {entry.intervalDays === 1 ? "day" : "days"} ·{" "}
-                </>
-              )}
-              <GapCopy entry={entry} />
-            </p>
-            {entry.daysOverdue !== null && entry.daysOverdue > 0 && (
-              <p className="mt-1 text-xs text-slate">
-                <span className="num text-ink">{entry.daysOverdue}</span>{" "}
-                {entry.daysOverdue === 1 ? "day" : "days"} past its check date.
-                Later is harder, which is the point.
-              </p>
-            )}
+
+              <div className="mt-auto pt-4">
+                <p className="text-[0.8125rem] leading-relaxed text-text-2">
+                  {entry.intervalDays !== null && (
+                    <>
+                      Last gap{" "}
+                      <span className="num text-text">{entry.intervalDays}</span>{" "}
+                      {entry.intervalDays === 1 ? "day" : "days"} ·{" "}
+                    </>
+                  )}
+                  <GapCopy entry={entry} />
+                </p>
+                {entry.daysOverdue !== null && entry.daysOverdue > 0 && (
+                  <p className="mt-1.5 text-xs leading-relaxed text-text-3">
+                    Past its check date. Later is harder, which is the point.
+                  </p>
+                )}
+              </div>
+            </Card>
           </li>
         ))}
       </ul>
-    </section>
+
+      <Well className="mt-4">
+        <p className="text-sm leading-relaxed text-text-2">
+          Answering these happens in the learn session, so the hint ladder and
+          the marking work the same way they always do.
+        </p>
+      </Well>
+    </>
   );
 }

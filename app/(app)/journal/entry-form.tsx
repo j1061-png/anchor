@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
 
 // N4 — writing an entry after a wrong answer. Two questions, both in the
 // student's own words: what went wrong, and what to do next time. Nothing is
@@ -15,7 +17,7 @@ export interface OpenAttempt {
 }
 
 const field =
-  "w-full rounded-(--radius-ctl) border border-ink bg-chalk px-3 py-2.5 text-sm text-ink placeholder:text-slate";
+  "w-full rounded-[var(--r-md)] border border-[var(--line-strong)] bg-surface px-3.5 py-2.5 text-sm leading-relaxed text-text placeholder:text-text-3 transition-colors hover:border-[var(--line-strong)]";
 
 export function JournalForm({
   attempts,
@@ -41,13 +43,23 @@ export function JournalForm({
 
   if (options.length === 0) {
     return (
-      <section className="plane p-5">
-        <h2 className="font-display text-xl font-extrabold">New entry</h2>
-        <p className="mt-2 text-sm text-slate">
-          Nothing to write up. Entries attach to an answer you got wrong, so this
-          fills in after your next session.
-        </p>
-      </section>
+      <Card className="h-full">
+        <div className="flex items-start gap-3.5">
+          <span className="grid size-10 shrink-0 place-items-center rounded-[var(--r-md)] bg-raised text-text-3">
+            <Icon name="check" size={19} />
+          </span>
+          <div>
+            <p className="font-display text-base font-bold">
+              Nothing waiting to be written up.
+            </p>
+            <p className="mt-1.5 max-w-[56ch] text-sm leading-relaxed text-text-2">
+              An entry attaches to a specific answer you got wrong, so this form
+              fills itself in after a session that has one. Nothing to do here
+              until then — and having none is a good sign, not a missed task.
+            </p>
+          </div>
+        </div>
+      </Card>
     );
   }
 
@@ -85,19 +97,20 @@ export function JournalForm({
   };
 
   return (
-    <section className="plane p-5">
-      <h2 className="font-display text-xl font-extrabold">New entry</h2>
-
-      <div className="mt-4 flex flex-col gap-4">
+    <Card className="h-full">
+      <div className="flex flex-col gap-5">
         <div>
-          <label htmlFor="journal-attempt" className="text-sm font-semibold">
+          <label
+            htmlFor="journal-attempt"
+            className="t-eyebrow block"
+          >
             Which one
           </label>
           <select
             id="journal-attempt"
             value={attemptId}
             onChange={(event) => setAttemptId(event.target.value)}
-            className={`${field} min-h-11`}
+            className={`${field} mt-2 min-h-11 cursor-pointer`}
           >
             {options.map((entry) => (
               <option key={entry.id} value={entry.id}>
@@ -109,10 +122,10 @@ export function JournalForm({
         </div>
 
         <div>
-          <label htmlFor="journal-wrong" className="text-sm font-semibold">
+          <label htmlFor="journal-wrong" className="t-eyebrow block">
             What went wrong
           </label>
-          <p className="mb-1 text-xs text-slate">
+          <p className="mb-2 mt-1 text-xs leading-relaxed text-text-3">
             Your words, not the app&apos;s. What were you thinking when you
             answered?
           </p>
@@ -127,10 +140,12 @@ export function JournalForm({
         </div>
 
         <div>
-          <label htmlFor="journal-next" className="text-sm font-semibold">
+          <label htmlFor="journal-next" className="t-eyebrow block">
             What to do next time
           </label>
-          <p className="mb-1 text-xs text-slate">One concrete move. Optional.</p>
+          <p className="mb-2 mt-1 text-xs leading-relaxed text-text-3">
+            One concrete move. Optional.
+          </p>
           <textarea
             id="journal-next"
             rows={3}
@@ -141,22 +156,26 @@ export function JournalForm({
           />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <Button onClick={save} disabled={busy} className="self-start">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button onClick={save} loading={busy}>
             {busy ? "Saving" : "Save entry"}
           </Button>
           {error && (
-            <p className="text-sm text-flag" role="alert">
+            <p className="text-sm font-semibold text-brand" role="alert">
               {error}
             </p>
           )}
           {saved && !error && (
-            <p className="text-sm text-slate" role="status">
+            <p
+              className="inline-flex items-center gap-1.5 text-sm text-text-2"
+              role="status"
+            >
+              <Icon name="check" size={15} className="text-[var(--green)]" />
               Saved. It comes back if the same mistake does.
             </p>
           )}
         </div>
       </div>
-    </section>
+    </Card>
   );
 }

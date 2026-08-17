@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { socraticTurn, type TutorTurn } from "@/lib/research/tutor";
 import { helpRank } from "@/lib/research/types";
+import { AI_HELP_OFF, hasAiConsent } from "@/lib/ai-consent";
 import { broke, fail, int, readRows, str, write } from "../_lib/db";
 import {
   buildState,
@@ -56,6 +57,15 @@ export async function POST(request: Request) {
 
   if (ctx.attempt.completed_at !== null) {
     return fail("That item is finished, so the tutor is closed on it.", 409);
+  }
+
+  // Guideline 5.1.2(i). The dialogue is the most explicit case of student text
+  // leaving the app — the message, the transcript and the working all go to the
+  // provider — so it refuses first, before the message is read or stored. The
+  // turn is not written to `tutor_turns` either: a refused request leaves no
+  // transcript because no conversation happened.
+  if (!(await hasAiConsent(user.id))) {
+    return NextResponse.json({ error: AI_HELP_OFF, state: buildState(ctx) }, { status: 403 });
   }
 
   const shut = tutorGate(ctx);

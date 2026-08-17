@@ -77,6 +77,10 @@ export function RuleShiftPuzzle({ puzzle, onSolve, onGrade }: PuzzleProps) {
   const [wasCorrect, setWasCorrect] = useState<boolean | null>(null);
   const [startedAt] = useState(() => performance.now());
   const [error, setError] = useState<string | null>(null);
+  // Held until the student presses Next, so the explanation stays readable.
+  const [pending, setPending] = useState<Parameters<typeof onSolve>[0] | null>(
+    null,
+  );
 
   const submit = async () => {
     if (choice === null || phase !== "play") return;
@@ -90,15 +94,15 @@ export function RuleShiftPuzzle({ puzzle, onSolve, onGrade }: PuzzleProps) {
         typeof solution?.choice === "number" ? solution.choice : null,
       );
       setPhase("done");
-      setTimeout(() => {
-        onSolve({
-          correct: result.correct,
-          timeMs: Math.round(performance.now() - startedAt),
-          hintsUsed: 0,
-          attempts: 1,
-          answer: { choice },
-        });
-      }, 1200);
+      // The worked solution renders now; advancing on a timer used to wipe it
+      // off the screen after 1.2s. The student decides when to move on.
+      setPending({
+        correct: result.correct,
+        timeMs: Math.round(performance.now() - startedAt),
+        hintsUsed: 0,
+        attempts: 1,
+        answer: { choice },
+      });
     } catch {
       setPhase("play");
       setError("That didn't save. Check your connection and try again.");
@@ -174,13 +178,19 @@ export function RuleShiftPuzzle({ puzzle, onSolve, onGrade }: PuzzleProps) {
 
       {error && <p className="text-sm text-flag">{error}</p>}
 
-      <Button
-        onClick={submit}
-        disabled={choice === null || phase !== "play"}
-        className="self-start"
-      >
-        Lock it in
-      </Button>
+      {pending ? (
+        <Button onClick={() => onSolve(pending)} className="self-start">
+          Next puzzle
+        </Button>
+      ) : (
+        <Button
+          onClick={submit}
+          disabled={choice === null || phase !== "play"}
+          className="self-start"
+        >
+          {phase === "grading" ? "Checking" : "Lock it in"}
+        </Button>
+      )}
     </div>
   );
 }

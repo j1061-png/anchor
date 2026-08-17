@@ -10,6 +10,7 @@ import { RuleShiftPuzzle } from "@/components/puzzle/ruleshift";
 import { RecallPuzzle } from "@/components/puzzle/recall";
 import { MentalMathPuzzle } from "@/components/puzzle/mentalmath";
 import { SessionRecap } from "@/components/session/recap";
+import { AiConsentCard } from "@/components/learn/ai-consent";
 import { Button } from "@/components/ui/button";
 import {
   PUZZLE_LABELS,
@@ -43,11 +44,24 @@ type Stage =
   | { kind: "puzzle"; payload: SessionPayload; slotIndex: number }
   | { kind: "recap" };
 
-export function SessionPlayer({ sessionId }: { sessionId: string }) {
+export function SessionPlayer({
+  sessionId,
+  friendCode,
+  sharingOptedIn = false,
+}: {
+  sessionId: string;
+  /** Passed through to the recap so shared links carry ?ref=. */
+  friendCode?: string;
+  /** profiles.leaderboard_opt_in — whether a public card would render. */
+  sharingOptedIn?: boolean;
+}) {
   const [stage, setStage] = useState<Stage>({ kind: "loading" });
   const [startedAt, setStartedAt] = useState(Date.now());
   const [hintTexts, setHintTexts] = useState<string[]>([]);
   const [hintLoading, setHintLoading] = useState(false);
+  // Set when /api/hint refuses for want of AI consent, so the card can be
+  // offered in place of an error the student cannot act on.
+  const [needsAiConsent, setNeedsAiConsent] = useState(false);
   const [gradeState, setGradeState] = useState<{
     result: { correct: boolean } | null;
     explanation: string | null;
@@ -114,6 +128,12 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
         body: JSON.stringify({ sessionId, seed: slot.seed, tier }),
       });
       const d = await r.json();
+      // Hints are model-written from your attempt, so they need AI consent.
+      // Show the card rather than an error the student cannot act on.
+      if (r.status === 403 && d.code === "ai_consent_required") {
+        setNeedsAiConsent(true);
+        return;
+      }
       if (!r.ok) throw new Error(d.error ?? "No hint right now.");
       setHintTexts((h) => [...h, d.hint]);
     } catch (e) {
@@ -202,7 +222,13 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
   }
 
   if (stage.kind === "recap") {
-    return <SessionRecap sessionId={sessionId} />;
+    return (
+      <SessionRecap
+        sessionId={sessionId}
+        friendCode={friendCode}
+        optedIn={sharingOptedIn}
+      />
+    );
   }
 
   if (stage.kind === "intro") {
@@ -258,6 +284,14 @@ export function SessionPlayer({ sessionId }: { sessionId: string }) {
         onGrade={onGrade}
         onHintRequest={onHintRequest}
       />
+      {needsAiConsent && (
+        <AiConsentCard
+          onAgree={async () => {
+            setNeedsAiConsent(false);
+            await onRequestHint();
+          }}
+        />
+      )}
     </PuzzleFrame>
   );
 }

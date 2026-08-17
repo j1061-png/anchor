@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { scoreSelfExplanation, type SelfExplanationScore } from "@/lib/research/tutor";
 import { PROXY_DISCLAIMER } from "@/lib/research/types";
+import { hasAiConsent } from "@/lib/ai-consent";
 import { broke, fail, write } from "../_lib/db";
 import { buildState, currentUser, loadContext, reload, toTutorItem } from "../_lib/context";
 import { awardSelfExplanation, recordStep } from "../_lib/awards";
@@ -19,6 +20,12 @@ import { awardSelfExplanation, recordStep } from "../_lib/awards";
 //
 // This route stays open after the item is finished: explaining back once you
 // have solved something is the point of the protégé effect, not a loophole.
+//
+// Guideline 5.1.2(i): only the last 40 points need the provider, so a student
+// without consent still writes the explanation, still earns the +5, and still
+// gets the 60 deterministic points and the rubric breakdown — the judgement
+// line says plainly that nothing was sent. Refusing the whole route would
+// remove a research feature that mostly does not need AI at all.
 
 const bodySchema = z.object({
   attemptId: z.uuid(),
@@ -47,6 +54,7 @@ export async function POST(request: Request) {
       item: toTutorItem(ctx.item),
       answerKey: ctx.item.answer_key,
       explanation,
+      useModel: await hasAiConsent(ctx.userId),
     });
 
     await recordStep(ctx.db, ctx.attempt.id, {
