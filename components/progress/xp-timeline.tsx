@@ -67,14 +67,12 @@ export function XpTimeline({ data }: { data: TimelineResponse }) {
     return all.slice(-n);
   }, [data.days, range]);
 
-  const { path, areaPath, points, minXp, maxXp } = useMemo(() => {
+  const { path, areaPath, points } = useMemo(() => {
     if (days.length === 0) {
       return {
         path: "",
         areaPath: "",
         points: [] as { x: number; y: number; d: TimelineDay }[],
-        minXp: 0,
-        maxXp: 0,
       };
     }
     const lo = days[0].cumulative;
@@ -114,7 +112,7 @@ export function XpTimeline({ data }: { data: TimelineResponse }) {
     const base = padT + innerH;
     const area = `${line} L ${pts[pts.length - 1].x} ${base} L ${pts[0].x} ${base} Z`;
 
-    return { path: line, areaPath: area, points: pts, minXp: bottom, maxXp: top };
+    return { path: line, areaPath: area, points: pts };
   }, [days, width, height]);
 
   // Milestones that fall inside the visible window, snapped to a day index.

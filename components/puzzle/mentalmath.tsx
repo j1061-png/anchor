@@ -65,7 +65,7 @@ export function MentalMathPuzzle({ puzzle, onSolve, onGrade }: PuzzleProps) {
         setPhase("play");
       }
     },
-    [buildAnswer, onGrade, onSolve],
+    [buildAnswer, onGrade],
   );
 
   // Countdown.

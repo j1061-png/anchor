@@ -9,7 +9,7 @@ import { evaluateAchievements } from "@/lib/achievements";
 import { generateRecapFeedback, type RecapPuzzleSummary } from "@/lib/ai";
 import { scoreAttempt } from "@/lib/research/xp";
 import type { HelpLevel } from "@/lib/research/types";
-import { levelForXp, type PuzzleType, type SessionSlot } from "@/lib/types";
+import type { PuzzleType, SessionSlot } from "@/lib/types";
 
 const bodySchema = z.object({
   slotIndex: z.number().int().min(0).max(4),
@@ -213,18 +213,12 @@ export async function POST(
 
   const sessionComplete = claimedCompletion === true;
   if (sessionComplete) {
-    const { data: fresh } = await admin
-      .from("sessions")
-      .select("xp_earned")
-      .eq("id", session.id)
-      .single();
     await completeSession({
       admin,
       userId: user.id,
       sessionId: session.id,
       sessionType: session.type,
       challengeId: session.challenge_id,
-      xpEarned: fresh?.xp_earned ?? session.xp_earned + xp,
     });
   }
 
@@ -244,9 +238,8 @@ async function completeSession(args: {
   sessionId: string;
   sessionType: string;
   challengeId: string | null;
-  xpEarned: number;
 }) {
-  const { admin, userId, sessionId, sessionType, challengeId, xpEarned } = args;
+  const { admin, userId, sessionId, sessionType, challengeId } = args;
 
   const { data: attempts } = await admin
     .from("attempts")

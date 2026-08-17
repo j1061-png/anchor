@@ -103,7 +103,7 @@ function SequenceRecall({
         setError("That didn't save. Check your connection and try again.");
       }
     },
-    [onGrade, onSolve],
+    [onGrade],
   );
 
   const tapCell = (r: number, c: number) => {

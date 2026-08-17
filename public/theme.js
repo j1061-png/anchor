@@ -9,7 +9,7 @@
     var el = document.documentElement;
     el.classList.toggle("dark", dark);
     el.style.colorScheme = dark ? "dark" : "light";
-  } catch (e) {
+  } catch {
     /* Private mode or storage disabled: fall back to light. */
   }
 })();
