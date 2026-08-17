@@ -89,7 +89,7 @@ export default async function TodayPage() {
   return (
     <Page width="wide">
       {/* --- The one thing to do now ------------------------------------- */}
-      <section className="rise-in relative overflow-hidden rounded-[var(--r-xl)] border border-[var(--line)] bg-surface p-6 shadow-[var(--shadow-md)] sm:p-9">
+      <section className="rise-in relative overflow-hidden rounded-[var(--r-xl)] border border-[var(--line)] bg-surface p-5 shadow-[var(--shadow-md)] sm:p-9">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full opacity-60 blur-3xl"
@@ -104,14 +104,14 @@ export default async function TodayPage() {
               <Badge tone="brand" icon="today">
                 Today&apos;s five
               </Badge>
-              <h1 className="t-hero mt-4">
+              <h1 className="t-hero mt-3">
                 Ready when you are, {firstName}.
               </h1>
-              <p className="mt-3 max-w-[46ch] text-[0.9375rem] leading-relaxed text-text-2">
+              <p className="mt-2.5 max-w-[46ch] text-sm leading-relaxed text-text-2 sm:text-[0.9375rem]">
                 Five puzzles picked for the categories you are weakest in. The
                 first 45 seconds of each are yours alone — no hints, no answers.
               </p>
-              <div className="mt-6 flex flex-wrap items-center gap-3">
+              <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-6">
                 <StartSessionButton label="Start today's session" />
                 <span className="num text-sm text-text-3">
                   about 8 minutes
@@ -125,7 +125,7 @@ export default async function TodayPage() {
               <Badge tone="amber" icon="clock">
                 In progress
               </Badge>
-              <h1 className="t-hero mt-4">Pick up where you stopped.</h1>
+              <h1 className="t-hero mt-3">Pick up where you stopped.</h1>
               <p className="mt-3 text-[0.9375rem] leading-relaxed text-text-2">
                 <span className="num font-semibold text-text">{done}/5</span>{" "}
                 answered. The clock only runs while a puzzle is open.
@@ -161,7 +161,7 @@ export default async function TodayPage() {
               <Badge tone="green" icon="check">
                 Done for today
               </Badge>
-              <h1 className="t-hero mt-4">
+              <h1 className="t-hero mt-3">
                 {Math.round((session!.accuracy ?? 0) * 5)} of 5 solved.
               </h1>
               {session!.feedback && (
@@ -193,7 +193,7 @@ export default async function TodayPage() {
         title="More ways to train"
         description="All optional. Each one trains something the daily five does not."
       >
-        <div className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="stagger grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           <TrainCard
             href="/review"
             icon="review"
@@ -289,18 +289,22 @@ function TrainCard({
 }) {
   return (
     <Link href={href} className="group block">
-      <Card interactive className="h-full">
-        <div className="flex items-start justify-between gap-3">
-          <span className="grid size-10 place-items-center rounded-[var(--r-md)] bg-raised text-text-2 transition-colors group-hover:bg-[var(--brand-soft)] group-hover:text-brand">
-            <Icon name={icon} size={19} />
+      <Card interactive bare className="h-full p-3.5 sm:p-6">
+        <div className="flex items-start justify-between gap-2">
+          <span className="grid size-9 place-items-center rounded-[var(--r-md)] bg-raised text-text-2 transition-colors group-hover:bg-[var(--brand-soft)] group-hover:text-brand sm:size-10">
+            <Icon name={icon} size={18} />
           </span>
           {badge && (
             <Badge tone={tone === "brand" ? "brand" : "neutral"}>{badge}</Badge>
           )}
         </div>
-        <h3 className="mt-3.5 font-display text-base font-bold">{title}</h3>
-        <p className="mt-1.5 text-sm leading-relaxed text-text-2">{body}</p>
-        <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-text-2 transition-colors group-hover:text-brand">
+        <h3 className="mt-2.5 font-display text-sm font-bold sm:mt-3.5 sm:text-base">
+          {title}
+        </h3>
+        <p className="mt-1 text-xs leading-relaxed text-text-2 sm:mt-1.5 sm:text-sm">
+          {body}
+        </p>
+        <span className="mt-3 hidden items-center gap-1 text-sm font-semibold text-text-2 transition-colors group-hover:text-brand sm:inline-flex">
           Open
           <Icon
             name="chevronRight"

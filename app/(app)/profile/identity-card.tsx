@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Avatar, AVATAR_TOKENS } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,12 +10,7 @@ import { ShareInline } from "@/components/share/share-inline";
 import type { ProfileRow } from "@/lib/database.types";
 
 // Same 24 faces as onboarding, so a re-pick feels familiar.
-const AVATARS = [
-  "🦊", "🐸", "🦉", "🐙", "🦖", "🐝",
-  "🐢", "🦈", "🐇", "🦫", "🐊", "🦩",
-  "🐞", "🐐", "🦭", "🐌", "🦅", "🐺",
-  "🦋", "🐧", "🐘", "🦔", "🐆", "🐋",
-];
+const AVATARS = AVATAR_TOKENS;
 
 const YEAR_GROUPS = [
   "Year 9",
@@ -198,13 +194,13 @@ export function IdentityCard(props: IdentityCardProps) {
                   aria-pressed={emoji === face}
                   aria-label={`avatar ${face}`}
                   onClick={() => setEmoji(emoji === face ? null : face)}
-                  className={`flex size-11 cursor-pointer items-center justify-center rounded-(--radius-ctl) text-xl ${
+                  className={`flex size-12 cursor-pointer items-center justify-center rounded-full transition-transform ${
                     emoji === face
-                      ? "border-2 border-ink bg-gold/40"
-                      : "border border-slate/40 bg-chalk hover:border-ink"
+                      ? "scale-105 ring-2 ring-brand"
+                      : "hover:scale-105"
                   }`}
                 >
-                  {face}
+                  <Avatar token={face} size={44} ring={emoji !== face} />
                 </button>
               ))}
             </div>

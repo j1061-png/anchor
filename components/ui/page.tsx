@@ -24,7 +24,7 @@ export function PageHeader({
   className?: string;
 }) {
   return (
-    <header className={`mb-7 sm:mb-9 ${className}`}>
+    <header className={`mb-5 sm:mb-9 ${className}`}>
       <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           {eyebrow && <p className="t-eyebrow mb-2">{eyebrow}</p>}
@@ -80,7 +80,7 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <section className={`mt-10 first:mt-0 ${className}`}>
+    <section className={`mt-7 first:mt-0 sm:mt-10 ${className}`}>
       {(title || action) && (
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>

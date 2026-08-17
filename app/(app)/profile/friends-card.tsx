@@ -6,16 +6,10 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { FriendRow } from "@/app/api/friends/route";
+import { Avatar } from "@/components/ui/avatar";
 
-function Face({ emoji, name }: { emoji: string | null; name: string }) {
-  return (
-    <span
-      aria-hidden
-      className="flex size-9 shrink-0 items-center justify-center rounded-(--radius-ctl) border border-slate/40 bg-paper text-lg"
-    >
-      {emoji ?? name.slice(0, 1)}
-    </span>
-  );
+function Face({ emoji }: { emoji: string | null; name: string }) {
+  return <Avatar token={emoji} size={36} />;
 }
 
 export function FriendsCard() {

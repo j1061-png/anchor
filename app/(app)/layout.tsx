@@ -43,7 +43,7 @@ export default async function AppLayout({
           owns gutters and the clearance for the mobile tab bar. */}
       <main
         id="main"
-        className="pb-tabbar mx-auto w-full max-w-[88rem] px-4 pt-6 sm:px-6 sm:pb-16 sm:pt-10"
+        className="pb-tabbar mx-auto w-full max-w-[88rem] px-4 pt-4 sm:px-6 sm:pb-16 sm:pt-10"
       >
         {children}
       </main>

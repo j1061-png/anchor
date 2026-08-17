@@ -242,12 +242,12 @@ p {
 
 /* Fluid display sizes — big without overflowing a 360px phone. */
 .t-hero {
-  font-size: clamp(2.1rem, 1.3rem + 3.4vw, 3.4rem);
+  font-size: clamp(1.7rem, 1.05rem + 2.9vw, 3.4rem);
   line-height: 1.04;
   letter-spacing: -0.035em;
 }
 .t-title {
-  font-size: clamp(1.5rem, 1.15rem + 1.6vw, 2.1rem);
+  font-size: clamp(1.3rem, 1rem + 1.5vw, 2.1rem);
   line-height: 1.12;
   letter-spacing: -0.03em;
 }

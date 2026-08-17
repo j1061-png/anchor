@@ -1,6 +1,7 @@
 // Public challenge page. Anyone with the code can view it (per RLS the
 // challenge and its results are world-readable); playing requires an account.
 
+import { Avatar } from "@/components/ui/avatar";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -169,14 +170,7 @@ export default async function ChallengePage({
 
       <section className="plane p-6">
         <div className="flex items-center gap-3">
-          {creator?.avatar_emoji && (
-            <span
-              aria-hidden
-              className="plane-sm flex size-11 items-center justify-center text-xl"
-            >
-              {creator.avatar_emoji}
-            </span>
-          )}
+          <Avatar token={creator?.avatar_emoji} size={44} />
           <h1 className="font-display text-2xl font-extrabold tracking-tight">
             {creatorName} set a challenge.
           </h1>
@@ -258,9 +252,7 @@ export default async function ChallengePage({
                   }`}
                 >
                   <span className="num w-6 text-sm text-slate">{i + 1}</span>
-                  <span aria-hidden className="text-lg">
-                    {p?.avatar_emoji ?? ""}
-                  </span>
+                  <Avatar token={p?.avatar_emoji} size={30} />
                   <span className="flex-1 truncate text-sm font-semibold">
                     {p?.display_name ?? "Player"}
                     {mine && (

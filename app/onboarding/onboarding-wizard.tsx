@@ -1,18 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Avatar, AVATAR_TOKENS } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Calibration, type CalibrationResults } from "./calibration";
 
-const AVATARS = [
-  "🦊", "🐸", "🦉", "🐙", "🦖", "🐝",
-  "🐢", "🦈", "🐇", "🦫", "🐊", "🦩",
-  "🐞", "🐐", "🦭", "🐌", "🦅", "🐺",
-  "🦋", "🐧", "🐘", "🦔", "🐆", "🐋",
-];
+const AVATARS = AVATAR_TOKENS;
 
 export const YEAR_GROUPS = [
   "Year 9",
@@ -158,13 +154,13 @@ export function OnboardingWizard() {
                   onClick={() =>
                     setAvatarEmoji(avatarEmoji === emoji ? null : emoji)
                   }
-                  className={`flex size-11 cursor-pointer items-center justify-center rounded-(--radius-ctl) text-xl ${
+                  className={`flex size-12 cursor-pointer items-center justify-center rounded-full transition-transform ${
                     avatarEmoji === emoji
-                      ? "border-2 border-ink bg-gold/40"
-                      : "border border-slate/40 bg-chalk hover:border-ink"
+                      ? "scale-105 ring-2 ring-brand"
+                      : "hover:scale-105"
                   }`}
                 >
-                  {emoji}
+                  <Avatar token={emoji} size={44} ring={avatarEmoji !== emoji} />
                 </button>
               ))}
             </div>

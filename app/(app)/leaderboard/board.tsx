@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
+import { Avatar } from "@/components/ui/avatar";
 
 // Shared shapes and presentational pieces for the leaderboard. No hooks here;
 // everything renders on the server. Tab state lives in the URL (?tab=&page=).
@@ -53,21 +54,7 @@ function Row({
         {row.rank}
       </span>
 
-      {row.avatarEmoji ? (
-        <span
-          aria-hidden
-          className="grid size-9 shrink-0 place-items-center rounded-full bg-raised text-base"
-        >
-          {row.avatarEmoji}
-        </span>
-      ) : (
-        <span
-          aria-hidden
-          className="grid size-9 shrink-0 place-items-center rounded-full bg-raised text-text-3"
-        >
-          <Icon name="profile" size={16} />
-        </span>
-      )}
+      <Avatar token={row.avatarEmoji} size={36} />
 
       <span
         aria-hidden

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Wordmark } from "@/components/wordmark";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Avatar } from "@/components/ui/avatar";
 
 /**
  * Five destinations, two surfaces.
@@ -152,12 +153,7 @@ export function Nav({ displayName, avatarEmoji, streak }: NavProps) {
               className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1 transition-colors hover:bg-raised sm:pr-3"
               title="Your profile"
             >
-              <span
-                aria-hidden
-                className="grid size-8 place-items-center rounded-full bg-raised text-base ring-1 ring-[var(--line)]"
-              >
-                {avatarEmoji ?? "🙂"}
-              </span>
+              <Avatar token={avatarEmoji} size={32} />
               <span className="hidden max-w-28 truncate text-sm font-semibold md:inline">
                 {displayName}
               </span>
