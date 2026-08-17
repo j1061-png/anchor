@@ -135,12 +135,7 @@ export function IdentityCard(props: IdentityCardProps) {
     <section className="plane p-5" aria-label="Identity">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span
-            aria-hidden
-            className="flex size-14 shrink-0 items-center justify-center rounded-(--radius-ctl) border border-slate/40 bg-paper text-3xl"
-          >
-            {current.avatarEmoji ?? current.displayName.slice(0, 1)}
-          </span>
+          <Avatar token={current.avatarEmoji} size={56} />
           <div>
             <h2 className="font-display text-2xl font-extrabold tracking-tight">
               {current.displayName}
